@@ -11,72 +11,72 @@
 namespace KEngine{
     namespace KFunction{
         //vector functions
-        template <typename T, template <typename > typename vecType, typename F = T>
-        F dot(const vecType<T> &vec1, const vecType<T> &vec2){
+        template <typename vecType, typename F = Kfloat>
+        F dot(const vecType &vec1, const vecType &vec2){
             F res = 0;
             for(int i = 0; i < vec1.dimension(); ++i) res += vec1[i] * vec2[i];
             return res;
         };
 
-        template <typename T, template <typename > typename vecType, typename F = T>
-        F length(const vecType<T> &vec){
-            return sqrt(dot<T, vecType, F>(vec, vec));
+        template <typename vecType, typename F = Kfloat>
+        F length(const vecType &vec){
+            return sqrt(dot<vecType, F>(vec, vec));
         };
 
-        template <typename T, template <typename > typename vecType, typename F = T>
-        F distance(const vecType<T> &vec1, const vecType<T> &vec2){
-            return length<T, vecType, F>(vec2 - vec1);
+        template <typename vecType, typename F = Kfloat>
+        F distance(const vecType &vec1, const vecType &vec2){
+            return length<vecType, F>(vec2 - vec1);
         };
 
-        template <typename T, template <typename > typename vecType, typename F = T>
-        vecType<T> normalize(const vecType<T> &vec){
-            const F len = length<T, vecType, F>(vec);
-            if(KCore::isZero(len)) return vecType<T>(KNAN);
+        template <typename vecType, typename F = Kfloat>
+        vecType normalize(const vecType &vec){
+            const F len = length<vecType, F>(vec);
+            if(KCore::isZero(len)) return vecType(KNAN);
             return vec / len;
         };
 
-        template <typename T, template <typename > typename vecType, typename F = T>
-        vecType<T> faceforward(const vecType<T> &N, const vecType<T> &I, const vecType<T> Nref){
-            if(dot<T, vecType, F>(Nref, I) < static_cast<F>(0)){
+        template <typename vecType, typename F = Kfloat>
+        vecType faceforward(const vecType &N, const vecType &I, const vecType Nref){
+            if(dot<vecType, F>(Nref, I) < static_cast<F>(0)){
                 return N;
             } else {
                 return -N;
             }
         };
 
-        template <typename T, template <typename > typename vecType, typename F = T>
-        vecType<T> reflect(const vecType<T> &I, const vecType<T> &N){
-            const vecType<T> n = normalize(N);
-            return I - static_cast<T>(2) * dot<T, vecType, F>(n, I) * n;
+        template <typename vecType>
+        vecType reflect(const vecType &I, const vecType &N){
+            const vecType n = normalize(N);
+            return I - static_cast<Kfloat>(2) * dot<vecType, Kfloat>(n, I) * n;
         };
 
-        template <typename T, template <typename > typename vecType, typename F = T>
-        vecType<T> refract(const vecType<T> &I, const vecType<T> &N, const F &eta){
-            const vecType<T> i = normalize(I);
-            const vecType<T> n = normalize(N);
-            const F cosni = dot<T, vecType, F>(n, i);
+        template <typename vecType, typename F = Kfloat>
+        vecType refract(const vecType &I, const vecType &N, const F &eta){
+            const vecType i = normalize(I);
+            const vecType n = normalize(N);
+            const F cosni = dot<vecType, F>(n, i);
 
             const F k = static_cast<F>(1) - eta * eta * (static_cast<F>(1) - cosni * cosni);
             if(k < static_cast<F>(0)){
-                return vecType<T>(static_cast<T>(0));
+                return vecType();
             } else {
                 return eta * i - (eta * cosni + sqrt(k)) * n;
             }
         };
 
         //matrix functions
-        template <typename T, template <typename > typename matType>
-        matType<T> inverse(const matType<T> &m){
-            return matType<T>(m).inverse();
+        template <typename matType>
+        matType inverse(const matType &m){
+            return matType(m).inverse();
         };
 
-        template <typename T, template <typename > typename matType>
-        matType<T> transpose(const matType<T> &m){
-            return matType<T>(m).inverse();
+        template <typename matType>
+        matType transpose(const matType &m){
+            return matType(m).inverse();
         };
 
-        template <typename T, template <typename > typename matType, typename F = T>
-        F determinant(const matType<T> &m){
+        template <typename matType, typename F = Kfloat>
+        F determinant(const matType &m){
             return m.determinant();
         };
     }

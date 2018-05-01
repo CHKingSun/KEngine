@@ -16,40 +16,39 @@ namespace KEngine{
             AMBIENT = 1, POINT, DIRECTION, SPOT
         };
 
-        template <typename T = float>
         struct Light{
         private:
-            unsigned int id;
+            Kuint id;
             LightType type;
 
         public:
-            typedef KColor::Color<T> tcolor;
+            typedef KColor::Color tcolor;
 
             bool enable;
 
-            T factor; //Light intensity
+            Kfloat factor; //Light intensity
 
             tcolor ambient;
 
-            Light();
-            Light(unsigned int id, LightType type = AMBIENT): id(id), enable(true), type(type),
+            Light() = delete;
+            Light(Kuint id, LightType type = AMBIENT): id(id), enable(true), type(type),
                  factor(1.0), ambient(tcolor(0.8, 0.8, 0.8, 1.0)){};
-            Light(unsigned int id, const tcolor &ambient, LightType type = AMBIENT):
+            Light(Kuint id, const tcolor &ambient, LightType type = AMBIENT):
                     enable(true), type(type), factor(1.0), ambient(ambient){};
-            Light(unsigned int id, const tcolor &ambient, const T &factor, LightType type = AMBIENT):
+            Light(Kuint id, const tcolor &ambient, const Kfloat &factor, LightType type = AMBIENT):
                     enable(true), type(type), factor(factor), ambient(ambient){};
 
-            Light<T>& operator=(const Light<T> &light){
+            Light& operator=(const Light &light){
                 this->type = light.type;
                 this->id = light.id;
                 this->enable = light.enable;
                 this->factor = light.factor;
                 this->ambient = light.ambient;
             }
+            friend std::ostream& operator<<(std::ostream &os, const Light &light);
         };
 
-        template <typename T>
-        std::ostream& operator<<(std::ostream &os, const Light<T> &light){
+        std::ostream& operator<<(std::ostream &os, const Light &light){
             os << "id: " << light.id << " type: ";
             switch (light.type){
                 case AMBIENT:

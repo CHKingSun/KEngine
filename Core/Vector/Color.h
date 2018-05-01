@@ -5,8 +5,9 @@
 #ifndef KENGINE_COLOR_H
 #define KENGINE_COLOR_H
 
-#include <typeinfo>
 #include "../KHeader.h"
+#include "Vec2.h"
+#include "Vec3.h"
 #include "Vec4.h"
 
 //typeid
@@ -19,137 +20,103 @@ namespace KEngine{
     namespace KColor{
         using namespace KVector;
 
-        template <typename T = float>
-        struct Color:public Vec4<T>{
+        struct Color:public Vec4{
             Color():Color(0){}
-            Color(const Vec4<T> &v):Vec4<T>(v){}
-            explicit Color(const T &c):Vec4<T>(c){}
-            Color(const T &r, const T &g, const T &b, const T &a):Vec4<T>(r, g, b, a){}
-            Color(const Vec2<T> &v1, const Vec2<T> &v2):Vec4<T>(v1, v2){}
-            Color(const Vec3<T> &v, const T &a):Vec4<T>(v, a){}
+            Color(const Vec4 &v):Vec4(v){}
+            explicit Color(const Kfloat &c):Vec4(c){}
+            Color(const Kfloat &r, const Kfloat &g, const Kfloat &b, const Kfloat &a):Vec4(r, g, b, a){}
+            Color(const Vec2 &v1, const Vec2 &v2):Vec4(v1, v2){}
+            Color(const Vec3 &v, const Kfloat &a):Vec4(v, a){}
 
             //0Xaarrggbb
-            Color<T>& setHex(unsigned int hex){
-                const unsigned int mask = (1<<8) - 1;
-                const unsigned char b = hex & mask;
+            Color& setHex(Kuint hex){
+                const Kuint mask = (1<<8) - 1;
+                const Kuchar b = hex & mask;
                 hex >>= 8;
-                const unsigned char g = hex & mask;
+                const Kuchar g = hex & mask;
                 hex >>= 8;
-                const unsigned char r = hex & mask;
+                const Kuchar r = hex & mask;
                 hex >>= 8;
-                const unsigned char a = hex & mask;
+                const Kuchar a = hex & mask;
 
                 return setChar(r, g, b, a);
             }
-            Color<T>& setChar(const unsigned char &r, const unsigned char &g,
-                            const unsigned char &b, const unsigned char &a){
-                if(typeid(T) == typeid(char) || typeid(T) == typeid(unsigned char) ||
-                        typeid(T) == typeid(int) || typeid(T) == typeid(unsigned int)){
-                    this->set(r, g, b, a);
-                } else {
-                    const T tr = static_cast<T>(r) / static_cast<T>(255);
-                    const T tg = static_cast<T>(g) / static_cast<T>(255);
-                    const T tb = static_cast<T>(b) / static_cast<T>(255);
-                    const T ta = static_cast<T>(a) / static_cast<T>(255);
-                    this->set(tr, tg, tb, ta);
-                }
+            Color& setChar(const Kuchar &r, const Kuchar &g,
+                            const Kuchar &b, const Kuchar &a){
+                const Kfloat tr = static_cast<Kfloat>(r) / static_cast<Kfloat>(255);
+                const Kfloat tg = static_cast<Kfloat>(g) / static_cast<Kfloat>(255);
+                const Kfloat tb = static_cast<Kfloat>(b) / static_cast<Kfloat>(255);
+                const Kfloat ta = static_cast<Kfloat>(a) / static_cast<Kfloat>(255);
+                this->set(tr, tg, tb, ta);
                 return *this;
             }
-            Color<T>& setDouble(const double &r, const double &g, const double &b, const double &a){
-                if(typeid(T) == typeid(char) || typeid(T) == typeid(unsigned char) ||
-                   typeid(T) == typeid(int) || typeid(T) == typeid(unsigned int) ||
-                   typeid(T) == typeid(short) || typeid(T) == typeid(unsigned short)){
-                    const T tr = static_cast<T>(r) * static_cast<T>(255);
-                    const T tg = static_cast<T>(g) * static_cast<T>(255);
-                    const T tb = static_cast<T>(b) * static_cast<T>(255);
-                    const T ta = static_cast<T>(a) * static_cast<T>(255);
-                    this->set(tr, tg, tb, ta);
-                } else {
-                    this->set(r, g, b, a);
-                }
+            Color& setDouble(const Kdouble &r, const Kdouble &g, const Kdouble &b, const Kdouble &a){
+                this->set(r, g, b, a);
             }
-            Color<T>& setInt_2_10_10_10(unsigned int c){
-                const unsigned int mask = (1 << 10) - 1;
-                const double r = double(c & mask) / double(mask);
+            Color& setInt_2_10_10_10(Kuint c){
+                const Kuint mask = (1 << 10) - 1;
+                const Kdouble r = Kdouble(c & mask) / Kdouble(mask);
                 c >>= 10;
-                const double g = double(c & mask) / double(mask);
+                const Kdouble g = Kdouble(c & mask) / Kdouble(mask);
                 c >>= 10;
-                const double b = double(c & mask) / double(mask);
+                const Kdouble b = Kdouble(c & mask) / Kdouble(mask);
                 c >>= 10;
-                const double a = double(c & mask) / double(mask);
+                const Kdouble a = Kdouble(c & mask) / Kdouble(mask);
                 setDouble(r, g, b, a);
             }
 
-            const unsigned int& toInt_2_10_10_10(){
-                unsigned int res = 0;
-                const double *rgba = toDouble();
-                const unsigned int mask = (1 << 10) - 1;
+            Kuint toInt_2_10_10_10(){
+                Kuint res = 0;
+                const Kdouble *rgba = toDouble();
+                const Kuint mask = (1 << 10) - 1;
                 res += rgba[3] * mask;
-                res = (res << 10) + rgba[0] * mask;
-                res = (res << 10) + rgba[1] * mask;
-                res = (res << 10) + rgba[2] * mask;
+                res = static_cast<Kuint>((res << 10) + rgba[0] * mask);
+                res = static_cast<Kuint>((res << 10) + rgba[1] * mask);
+                res = static_cast<Kuint>((res << 10) + rgba[2] * mask);
                 return res;
             }
-            const double* toDouble(){
-                double res[4];
-                if(typeid(T) == typeid(char) || typeid(T) == typeid(unsigned char) ||
-                   typeid(T) == typeid(int) || typeid(T) == typeid(unsigned int) ||
-                   typeid(T) == typeid(short) || typeid(T) == typeid(unsigned short)){
-                    res[0] = static_cast<double>(this->r) / static_cast<double>(255);
-                    res[1] = static_cast<double>(this->g) / static_cast<double>(255);
-                    res[2] = static_cast<double>(this->b) / static_cast<double>(255);
-                    res[3] = static_cast<double>(this->a) / static_cast<double>(255);
-                } else {
-                    res[0] = static_cast<double>(this->r);
-                    res[1] = static_cast<double>(this->g);
-                    res[2] = static_cast<double>(this->b);
-                    res[3] = static_cast<double>(this->a);
-                }
+            const Kdouble* toDouble(){
+                auto *res = new Kdouble[4];
+                res[0] = static_cast<Kdouble>(this->r);
+                res[1] = static_cast<Kdouble>(this->g);
+                res[2] = static_cast<Kdouble>(this->b);
+                res[3] = static_cast<Kdouble>(this->a);
                 return res;
             }
-            const unsigned char* toChar(){
-                unsigned char res[4];
-                if(typeid(T) == typeid(char) || typeid(T) == typeid(unsigned char) ||
-                   typeid(T) == typeid(int) || typeid(T) == typeid(unsigned int) ||
-                   typeid(T) == typeid(short) || typeid(T) == typeid(unsigned short)){
-                    res[0] = static_cast<unsigned char>(this->r);
-                    res[1] = static_cast<unsigned char>(this->g);
-                    res[2] = static_cast<unsigned char>(this->b);
-                    res[3] = static_cast<unsigned char>(this->a);
-                } else {
-                    res[0] = this->r * 255;
-                    res[1] = this->g * 255;
-                    res[2] = this->b * 255;
-                    res[3] = this->a * 255;
-                }
+            const Kuchar* toChar(){
+                auto *res = new Kuchar[4];
+                res[0] = static_cast<Kuchar>(this->r * 255);
+                res[1] = static_cast<Kuchar>(this->g * 255);
+                res[2] = static_cast<Kuchar>(this->b * 255);
+                res[3] = static_cast<Kuchar>(this->a * 255);
                 return res;
             }
-            const unsigned int& toHex(){
-                unsigned int res = 0;
-                const double *rgba = toDouble();
-                const unsigned int mask = (1 << 8) - 1;
+            Kuint toHex(){
+                Kuint res = 0;
+                const Kdouble *rgba = toDouble();
+                const Kuint mask = (1 << 8) - 1;
                 res += rgba[3] * mask;
-                res = (res << 8) + rgba[0] * mask;
-                res = (res << 8) + rgba[1] * mask;
-                res = (res << 8) + rgba[2] * mask;
+                res = static_cast<Kuint>((res << 8) + rgba[0] * mask);
+                res = static_cast<Kuint>((res << 8) + rgba[1] * mask);
+                res = static_cast<Kuint>((res << 8) + rgba[2] * mask);
                 return res;
             }
 
-            void setRgb(const T &r, const T &g, const T &b){
+            void setRgb(const Kfloat &r, const Kfloat &g, const Kfloat &b){
                 this->set(r, g, b, this->a);
             }
-            void setAlpha(const T &a){
+            void setAlpha(const Kfloat &a){
                 this->set(this->r, this->g, this->b, a);
             }
         };
 
-        const Color<> BLACK(0, 0, 0, 1.0f);
-        const Color<> RED(1.0f, 0, 0, 1.0f);
-        const Color<> BLUE(0, 1.0f, 0, 1.0f);
-        const Color<> GREEN(0, 0, 1.0f, 1.0f);
-        const Color<> ORANGE(1.0f, 1.0f, 0, 1.0f);
-        const Color<> YELLOW(0, 1.0f, 1.0f, 1.0f);
-        const Color<> PINK(1.0f, 0, 1.0f, 1.0f);
+        const Color BLACK(0, 0, 0, 1.0f);
+        const Color RED(1.0f, 0, 0, 1.0f);
+        const Color BLUE(0, 1.0f, 0, 1.0f);
+        const Color GREEN(0, 0, 1.0f, 1.0f);
+        const Color ORANGE(1.0f, 1.0f, 0, 1.0f);
+        const Color YELLOW(0, 1.0f, 1.0f, 1.0f);
+        const Color PINK(1.0f, 0, 1.0f, 1.0f);
     }
 }
 

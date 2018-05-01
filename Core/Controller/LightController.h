@@ -16,25 +16,23 @@ namespace KEngine{
     namespace KController{
         using namespace KLight;
 
-        template <typename T = float>
         struct LightController{ //All the variable and functions are static.
-            typedef KVector::Vec3<T> tvec3;
-            typedef KColor::Color<T> tcolor;
-            typedef Light<float> tlight;
+            typedef KVector::Vec3 tvec3;
+            typedef KColor::Color tcolor;
 
         private:
-            static std::vector<tlight*> lights;
-            static const int MAX_LIGHTS = 12;
+            static std::vector<KEngine::KLight::Light*> lights;
+            static const Ksize MAX_LIGHTS = 12;
 
         public:
-            static const Light<T>* getLight(int index){
+            static const Light* getLight(Kuint index){
                 if(index >= lights.size()) return nullptr;
-                return lights[index];
+                return lights.at(index);
             }
 
-            static bool addAmbientLight(const tcolor &ambient, const T &factor = 1.0){
+            static Kboolean addAmbientLight(const tcolor &ambient, const Kfloat &factor = 1.0){
                 if(lights.size() == MAX_LIGHTS) return false;
-                lights.push_back(new Light<T>(lights.size(), ambient, factor));
+                lights.push_back(new Light(lights.size(), ambient, factor));
                 return true;
             }
         };

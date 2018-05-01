@@ -7,135 +7,129 @@
 
 #include <cassert>
 #include <iosfwd>
+#include "../KHeader.h"
 #include "../function.h"
 
 namespace KEngine{
     namespace KVector{
-        template <typename T>
         struct Vec2{
             union {
-                T values[2];
-                struct { T x, y; };
-                struct { T s, t; };
+                Kfloat values[2];
+                struct { Kfloat x, y; };
+                struct { Kfloat s, t; };
             };
 
             Vec2():Vec2(0){}
-            Vec2(const Vec2<T> &v):x(v.x), y(v.y){}
-            explicit Vec2(const T &c):x(c), y(c){}
-            Vec2(const T &x, const T &y):x(x), y(y){}
+            Vec2(const Vec2 &v):x(v.x), y(v.y){}
+            explicit Vec2(const Kfloat &c):x(c), y(c){}
+            Vec2(const Kfloat &x, const Kfloat &y):x(x), y(y){}
 
-            inline int dimension()const {
+            inline Kint dimension()const {
                 return 2;
             }
-            const T* data()const{
+            const Kfloat* data()const{
                 return this->values;
             }
-//            T* data(){
+//            Kfloat* data(){
 //                return this->values;
 //            }
 
-            void set(const T &x, const T &y){
+            void set(const Kfloat &x, const Kfloat &y){
                 this->x = x;
                 this->y = y;
             }
-            void set(const T &c){
+            void set(const Kfloat &c){
                 this->x = c;
                 this->y = c;
             }
-            T& operator[](unsigned int n){
+            Kfloat& operator[](Kuint n){
                 assert(n >= 0 && n < 2);
                 return this->values[n]; //return reference, for assign
             }
-            const T& operator[](unsigned int n)const{
+            const Kfloat& operator[](Kuint n)const{
                 assert(n >= 0 && n < 2);
                 return this->values[n]; //for const object, just get value.
             }
 
-            Vec2<T>& operator=(const Vec2<T> &v){
+            Vec2& operator=(const Vec2 &v){
                 set(v.x, v.y);
                 return *this;
             }
-            inline Vec2<T>& operator+=(const Vec2<T> &v){
+            inline Vec2& operator+=(const Vec2 &v){
                 this->x += v.x;
                 this->y += v.y;
                 return *this;
             }
-            inline Vec2<T>& operator-=(const Vec2<T> &v){
+            inline Vec2& operator-=(const Vec2 &v){
                 this->x -= v.x;
                 this->y -= v.y;
                 return *this;
             }
-            inline Vec2<T>& operator*=(const Vec2<T> &v){
+            inline Vec2& operator*=(const Vec2 &v){
                 this->x *= v.x;
                 this->y *= v.y;
                 return *this;
             }
 
             template <typename C>
-            inline Vec2<T>& operator/=(const C &c){
+            inline Vec2& operator/=(const C &c){
                 this->x /= c;
                 this->y /= c;
                 return *this;
             }
             template <typename C>
-            inline Vec2<T>& operator*=(const C &c){
+            inline Vec2& operator*=(const C &c){
                 this->x *= c;
                 this->y *= c;
                 return *this;
             }
 
-            template <typename F = T>
+            template <typename F = Kdouble>
             F length()const {
-                return KFunction::length<T, Vec2, F>(*this);
+                return KFunction::length<Vec2, F>(*this);
             }
-            template <typename F = T>
-            F dot(const Vec2<T> &v)const {
-                return KFunction::dot<T, Vec2, F>(*this, v);
+            template <typename F = Kdouble>
+            F dot(const Vec2 &v)const {
+                return KFunction::dot<Vec2, F>(*this, v);
             }
-            Vec2<T>& normalize(){
-                const T len = length();
+            Vec2& normalize(){
+                const auto len = length<Kfloat>();
                 if(!KCore::isZero(len)) this->operator/=(len);
-                else this->set(static_cast<T>(KNAN));
+                else this->set(static_cast<Kfloat>(KNAN));
                 return *this;
             }
         };
 
-        template <typename T>
-        Vec2<T> operator-(const Vec2<T> &v){
-            return Vec2<T>() -= v;
+        Vec2 operator-(const Vec2 &v){
+            return Vec2() -= v;
         }
-        template <typename T>
-        Vec2<T> operator+(const Vec2<T> &v1, const Vec2<T> &v2){
-            return Vec2<T>(v1) += v2;
+        Vec2 operator+(const Vec2 &v1, const Vec2 &v2){
+            return Vec2(v1) += v2;
         }
-        template <typename T>
-        Vec2<T> operator-(const Vec2<T> &v1, const Vec2<T> &v2){
-            return Vec2<T>(v1) -= v2;
+        Vec2 operator-(const Vec2 &v1, const Vec2 &v2){
+            return Vec2(v1) -= v2;
         }
-        template <typename T>
-        Vec2<T> operator*(const Vec2<T> &v1, const Vec2<T> &v2){
-            return Vec2<T>(v1) *= v2;
+        Vec2 operator*(const Vec2 &v1, const Vec2 &v2){
+            return Vec2(v1) *= v2;
         }
-        template <typename T, typename C>
-        Vec2<T> operator*(const Vec2<T> &v, const C &c){
-            return Vec2<T>(v) *= c;
+        template <typename C>
+        Vec2 operator*(const Vec2 &v, const C &c){
+            return Vec2(v) *= c;
         };
-        template <typename T>
-        Vec2<T> operator*(const T &c, const Vec2<T> &v){
-            return Vec2<T>(v) *= c;
+        template <typename C>
+        Vec2 operator*(const C &c, const Vec2 &v){
+            return Vec2(v) *= c;
         };
-        template <typename T, typename C>
-        Vec2<T> operator/(const Vec2<T> &v, const C &c){
-            return Vec2<T>(v) /= c;
+        template <typename C>
+        Vec2 operator/(const Vec2 &v, const C &c){
+            return Vec2(v) /= c;
         };
-        template <typename T>
-        std::istream& operator>>(std::istream &is, Vec2<T> &v){
-            is>>v.x>>v.y;
+        std::istream& operator>>(std::istream &is, Vec2 &v){
+            is >> v.x >> v.y;
             return is;
         }
-        template <typename T>
-        std::ostream& operator<<(std::ostream &os, const Vec2<T> &v){
-            os<<v.x<<" "<<v.y;
+        std::ostream& operator<<(std::ostream &os, const Vec2 &v){
+            os << v.x << " " << v.y;
             return os;
         }
     }
