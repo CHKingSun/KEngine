@@ -14,7 +14,8 @@
 
 namespace KEngine{
     namespace KVector{
-        struct Vec4{
+        class Vec4{
+        public:
             union {
                 Kfloat values[4];
                 struct { Kfloat x, y, z, w; };
@@ -128,9 +129,13 @@ namespace KEngine{
             }
             Vec4& normalize(){
                 const auto len = length<Kfloat >();
-                if(!KCore::isZero(len)) this->operator/=(len);
+                if(!KFunction::isZero(len)) this->operator/=(len);
                 else set(static_cast<Kfloat>(KNAN));
                 return *this;
+            }
+
+            Vec3 toVec3()const {
+                return Vec3(x, y, z);
             }
         };
 

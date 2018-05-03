@@ -10,10 +10,11 @@
 
 namespace KEngine{
     namespace KLight{
-        struct SpotLight:public Light{
+        class SpotLight:public Light{
             typedef KVector::Vec3 tvec3;
             typedef KColor::Color tcolor;
 
+        public:
             tvec3 position;
             tvec3 direction;
 
@@ -67,6 +68,23 @@ namespace KEngine{
                     diffuse(diffuse), specular(specular),
                     innerCutOff(inner), outerCutOff(outer), shadowFactor(shadowFactor),
                     kc(kc), kl(kl), kq(kq){}
+
+            void rotate(const Kfloat &angle, const tvec3 &v){
+                direction = KMatrix::Quaternion(angle, v) * direction;
+            }
+            void rotate(const KMatrix::Quaternion &q){
+                direction = q * direction;
+            }
+            void rotate(const KMatrix::Mat4 &m){
+                direction = KMatrix::Quaternion().fromMatrix(m) * direction;
+            }
+            void rotate(const KMatrix::Mat3 &m){
+                direction = KMatrix::Quaternion().fromMatrix(m) * direction;
+            }
+
+            void translate(const tvec3 &v){
+                position += v;
+            }
         };
     }
 }

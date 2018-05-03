@@ -14,7 +14,7 @@
 
 namespace KEngine{
     namespace KMatrix{
-        struct Mat4{
+        class Mat4{
             typedef KVector::Vec4 Row;
 
         private:
@@ -37,7 +37,7 @@ namespace KEngine{
             Mat4(const Row &v0, const Row &v1, const Row &v2, const Row &v3){
                 this->values[0] = v0;
                 this->values[1] = v1;
-                this->values[2] = v3;
+                this->values[2] = v2;
                 this->values[3] = v3;
             }
             Mat4(const Kfloat &x0, const Kfloat &y0, const Kfloat &z0, const Kfloat &w0,
@@ -48,6 +48,12 @@ namespace KEngine{
                 this->values[1] = Row(x1, y1, z1, w1);
                 this->values[2] = Row(x2, y2, z2, w2);
                 this->values[3] = Row(x3, y3, z3, w3);
+            }
+            explicit Mat4(const Mat3 &m, const KVector::Vec3 &v = KVector::Vec3()){
+                this->values[0] = Row(m[0], v[0]);
+                this->values[1] = Row(m[1], v[1]);
+                this->values[2] = Row(m[2], v[2]);
+                this->values[3] = Row(0, 0, 0, 1);
             }
 
             const Kfloat* data()const {
@@ -68,6 +74,7 @@ namespace KEngine{
                 this->values[1] = m[1];
                 this->values[2] = m[2];
                 this->values[3] = m[3];
+				return *this;
             }
             Mat4& operator+=(const Mat4 &m){
                 this->values[0] += m[0];
@@ -80,7 +87,7 @@ namespace KEngine{
                 this->values[0] -= m[0];
                 this->values[1] -= m[1];
                 this->values[2] -= m[2];
-                this->values[2] *= m[2];
+                this->values[3] -= m[3];
                 return *this;
             }
             Mat4& operator*=(const Mat4 &m){
@@ -102,7 +109,7 @@ namespace KEngine{
 
                 Row col0(m[0][0], m[1][0], m[2][0], m[3][0]);
                 Row col1(m[0][1], m[1][1], m[2][1], m[3][1]);
-                Row col2(m[0][2], m[1][2], m[2][1], m[3][2]);
+                Row col2(m[0][2], m[1][2], m[2][2], m[3][2]);
                 Row col3(m[0][3], m[1][3], m[2][3], m[3][3]);
 
                 this->values[0][0] = KFunction::dot(row0, col0);
@@ -203,23 +210,23 @@ namespace KEngine{
                 const Kfloat cof33 = values[2][0] * det9 - values[2][1] * det7 + values[2][2] * det6;
 
                 values[0][0] = cof00 / detM;
-                values[0][1] = -cof01 / detM;
-                values[0][2] = cof02 / detM;
-                values[0][3] = -cof03 / detM;
+                values[0][1] = -cof10 / detM;
+                values[0][2] = cof20 / detM;
+                values[0][3] = -cof30 / detM;
 
-                values[1][0] = -cof10 / detM;
+                values[1][0] = -cof01 / detM;
                 values[1][1] = cof11 / detM;
-                values[1][2] = -cof12 / detM;
-                values[1][3] = cof13 / detM;
+                values[1][2] = -cof21 / detM;
+                values[1][3] = cof31 / detM;
 
-                values[2][0] = cof20 / detM;
-                values[2][1] = -cof21 / detM;
+                values[2][0] = cof02 / detM;
+                values[2][1] = -cof12 / detM;
                 values[2][2] = cof22 / detM;
-                values[2][3] = -cof23 / detM;
+                values[2][3] = -cof32 / detM;
 
-                values[3][0] = -cof30 / detM;
-                values[3][1] = cof31 / detM;
-                values[3][2] = -cof32 / detM;
+                values[3][0] = -cof03 / detM;
+                values[3][1] = cof13 / detM;
+                values[3][2] = -cof23 / detM;
                 values[3][3] = cof33 / detM;
 
                 return *this;
@@ -241,11 +248,11 @@ namespace KEngine{
                 return values[0][0] * cof00 - values[0][1] * cof01 +
                        values[0][2] * cof02 - values[0][3] * cof03;
             }
-            Mat3 toMat3(){
+            Mat3 toMat3()const {
                 return Mat3(
                         values[0][0], values[0][1], values[0][2],
-                        values[0][0], values[0][1], values[0][2],
-                        values[0][0], values[0][1], values[0][2]
+                        values[1][0], values[1][1], values[1][2],
+                        values[2][0], values[2][1], values[2][2]
                 );
             }
         };
@@ -290,7 +297,7 @@ namespace KEngine{
             os << m[0] << '\n';
             os << m[1] << '\n';
             os << m[2] << '\n';
-            os << m[3] << '\n';
+            os << m[3];
             return os;
         }
     }

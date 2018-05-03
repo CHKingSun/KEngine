@@ -20,7 +20,8 @@ namespace KEngine{
     namespace KColor{
         using namespace KVector;
 
-        struct Color:public Vec4{
+        class Color:public Vec4{
+        public:
             Color():Color(0){}
             Color(const Vec4 &v):Vec4(v){}
             explicit Color(const Kfloat &c):Vec4(c){}
@@ -29,7 +30,7 @@ namespace KEngine{
             Color(const Vec3 &v, const Kfloat &a):Vec4(v, a){}
 
             //0Xaarrggbb
-            Color& setHex(Kuint hex){
+            Color& setFromHex(Kuint hex){
                 const Kuint mask = (1<<8) - 1;
                 const Kuchar b = hex & mask;
                 hex >>= 8;
@@ -39,9 +40,9 @@ namespace KEngine{
                 hex >>= 8;
                 const Kuchar a = hex & mask;
 
-                return setChar(r, g, b, a);
+                return setFromChar(r, g, b, a);
             }
-            Color& setChar(const Kuchar &r, const Kuchar &g,
+            Color& setFromChar(const Kuchar &r, const Kuchar &g,
                             const Kuchar &b, const Kuchar &a){
                 const Kfloat tr = static_cast<Kfloat>(r) / static_cast<Kfloat>(255);
                 const Kfloat tg = static_cast<Kfloat>(g) / static_cast<Kfloat>(255);
@@ -50,10 +51,11 @@ namespace KEngine{
                 this->set(tr, tg, tb, ta);
                 return *this;
             }
-            Color& setDouble(const Kdouble &r, const Kdouble &g, const Kdouble &b, const Kdouble &a){
+            Color& setFromDouble(const Kdouble &r, const Kdouble &g, const Kdouble &b, const Kdouble &a){
                 this->set(r, g, b, a);
+                return  *this;
             }
-            Color& setInt_2_10_10_10(Kuint c){
+            Color& setFromInt_2_10_10_10(Kuint c){
                 const Kuint mask = (1 << 10) - 1;
                 const Kdouble r = Kdouble(c & mask) / Kdouble(mask);
                 c >>= 10;
@@ -61,15 +63,15 @@ namespace KEngine{
                 c >>= 10;
                 const Kdouble b = Kdouble(c & mask) / Kdouble(mask);
                 c >>= 10;
-                const Kdouble a = Kdouble(c & mask) / Kdouble(mask);
-                setDouble(r, g, b, a);
+                const Kdouble a = Kdouble(c & mask) / Kdouble(3);
+                return setFromDouble(r, g, b, a);
             }
 
             Kuint toInt_2_10_10_10(){
                 Kuint res = 0;
                 const Kdouble *rgba = toDouble();
                 const Kuint mask = (1 << 10) - 1;
-                res += rgba[3] * mask;
+                res += rgba[3] * 3;
                 res = static_cast<Kuint>((res << 10) + rgba[0] * mask);
                 res = static_cast<Kuint>((res << 10) + rgba[1] * mask);
                 res = static_cast<Kuint>((res << 10) + rgba[2] * mask);

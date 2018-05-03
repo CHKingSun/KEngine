@@ -5,6 +5,8 @@
 #ifndef KENGINE_KHEADER_H
 #define KENGINE_KHEADER_H
 
+#include <cmath>
+
 #define EPSILON_E6 1E-6
 #define PI 3.1415926535
 #ifdef KNAN
@@ -22,49 +24,69 @@ namespace KEngine{
     typedef unsigned char Kuchar;
     typedef bool Kboolean;
 
-    namespace KCore{
+    namespace KFunction{
         template <typename T>
-        T kabs(const T &c){
+        T abs(const T &c){
             return c >= static_cast<T>(0) ? c : -c;
         }
         template <typename T>
         Kboolean isZero(const T &c){
-            return kabs(c) <= static_cast<T>(EPSILON_E6);
+            return abs(c) <= static_cast<T>(EPSILON_E6);
         }
-        template <typename T, typename F = Kfloat>
+        template <typename T>
+        const T& min(const T &a, const T &b){
+            return a < b ? a : b;
+        }
+        template <typename T>
+        const T& max(const T &a, const T &b){
+            return a > b ? a : b;
+        }
+        template <typename T>
+        T clamp(const T &val, const T &min, const T &max){
+            if(max < min) return static_cast<T>(KNAN);
+            if(val > max) return max;
+            if(val < min) return min;
+            return val;
+        }
+        template <typename T, typename F = Kdouble>
         F toDegree(const T &radian){
             return F(radian) * static_cast<F>(180) / static_cast<F>(PI);
         }
-        template <typename T, typename F = Kfloat>
-        T toRadian(const T &degree){
+        template <typename T, typename F = Kdouble>
+        F toRadian(const T &degree){
             return F(degree) * static_cast<F>(PI) / static_cast<F>(180);
         }
     }
 
     namespace KVector{
-        struct Vec2;
-        struct Vec3;
-        struct Vec4;
+        class Vec2;
+        class Vec3;
+        class Vec4;
     }
 
     namespace KMatrix{
-        struct Mat3;
-        struct Mat4;
+        class Mat3;
+        class Mat4;
+        class Quaternion;
     }
 
     namespace KColor{
-        struct Color;
+        class Color;
     }
 
     namespace KLight{
-        struct Light;
-        struct PointLight;
-        struct DirectionLight;
-        struct SpotLight;
+        class Light;
+        class PointLight;
+        class DirectionLight;
+        class SpotLight;
+    }
+
+    namespace KCamera{
+        class Camera;
     }
 
     namespace KController{
-        struct LightController;
+        class LightController;
     }
 }
 

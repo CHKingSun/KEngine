@@ -16,7 +16,7 @@ namespace KEngine{
             AMBIENT = 1, POINT, DIRECTION, SPOT
         };
 
-        struct Light{
+        class Light{
         private:
             Kuint id;
             LightType type;

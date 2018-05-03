@@ -31,11 +31,12 @@ namespace KEngine{
         }
 
         Mat4 rotate(const Kfloat &angle, const Vec3 &v){
-            const auto cosA = static_cast<Kfloat>(cos(angle));
-            const auto sinA = static_cast<Kfloat>(sin(angle));
+            const auto ang = toRadian<Kfloat>(angle);
+            const auto cosA = static_cast<Kfloat>(cos(ang));
+            const auto sinA = static_cast<Kfloat>(sin(ang));
 
             Vec3 axis(normalize(v));
-            Vec3 tmp((static_cast<Kfloat>(1) - cosA) * v);
+            Vec3 tmp((static_cast<Kfloat>(1) - cosA) * axis);
             Mat4 m;
 
             m[0][0] = cosA + axis.x * tmp.x;
@@ -63,14 +64,15 @@ namespace KEngine{
         }
 
         Mat4 lookAt(const Vec3 &eye, const Vec3 &center, const Vec3 &up){
+            //if eye == center or up = 0, the matrix will be nan
             const Vec3 z((center - eye).normalize());
             const Vec3 x(Vec3::cross(z, up).normalize());
             const Vec3 y(Vec3::cross(x, z).normalize());
 
             return Mat4(
-                    x.x, x.y, x.z, -dot(x, z),
-                    y.x, y.y, y.z, -dot(y, z),
-                    -z.x, -z.y, -z.z, dot(z, z),
+                    x.x, x.y, x.z, -dot<Vec3, Kfloat>(x, eye),
+                    y.x, y.y, y.z, -dot<Vec3, Kfloat>(y, eye),
+                    -z.x, -z.y, -z.z, dot<Vec3, Kfloat>(z, eye),
                     0, 0, 0, 1
             );
         }

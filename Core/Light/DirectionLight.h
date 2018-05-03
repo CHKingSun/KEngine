@@ -6,14 +6,18 @@
 #define KENGINE_DIRECTIONLIGHT_H
 
 #include "../KHeader.h"
+#include "../Vector/Color.h"
+#include "../Vector/Vec3.h"
+#include "../Matrix/Quaternion.h"
 #include "Light.h"
 
 namespace KEngine{
     namespace KLight{
-        struct DirectionLight:public Light{
+        class DirectionLight:public Light{
             typedef KVector::Vec3 tvec3;
             typedef KColor::Color tcolor;
 
+        public:
             tvec3 direction;
 
             tcolor diffuse;
@@ -39,6 +43,19 @@ namespace KEngine{
                            const Kfloat &factor, const Kfloat &shadowFactor):
                     Light(id, ambient, factor, DIRECTION), direction(dir),
                     diffuse(diffuse), specular(specular), shadowFactor(shadowFactor){}
+
+            void rotate(const Kfloat &angle, const tvec3 &v){
+                direction = KMatrix::Quaternion(angle, v) * direction;
+            }
+            void rotate(const KMatrix::Quaternion &q){
+                direction = q * direction;
+            }
+            void rotate(const KMatrix::Mat4 &m){
+                direction = KMatrix::Quaternion().fromMatrix(m) * direction;
+            }
+            void rotate(const KMatrix::Mat3 &m){
+                direction = KMatrix::Quaternion().fromMatrix(m) * direction;
+            }
         };
     }
 }

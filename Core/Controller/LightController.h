@@ -16,7 +16,7 @@ namespace KEngine{
     namespace KController{
         using namespace KLight;
 
-        struct LightController{ //All the variable and functions are static.
+        class LightController{ //All the variable and functions are static.
             typedef KVector::Vec3 tvec3;
             typedef KColor::Color tcolor;
 

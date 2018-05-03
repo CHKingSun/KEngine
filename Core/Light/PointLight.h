@@ -10,10 +10,11 @@
 
 namespace KEngine{
     namespace KLight{
-        struct PointLight: public Light{
+        class PointLight: public Light{
             typedef KVector::Vec3 tvec3;
             typedef KColor::Color tcolor;
 
+        public:
             tvec3 position;
 
             tcolor diffuse;
@@ -49,6 +50,10 @@ namespace KEngine{
                     Light(id, ambient, factor, POINT), position(pos),
                     diffuse(diffuse), specular(specular),
                     shadowFactor(shadowFactor), kc(kc), kl(kl), kq(kq){}
+
+            void translate(const tvec3 &v){
+                position += v;
+            }
         };
     }
 }

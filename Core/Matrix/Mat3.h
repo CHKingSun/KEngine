@@ -13,7 +13,7 @@
 
 namespace KEngine{
     namespace KMatrix{
-        struct Mat3{
+        class Mat3{
             typedef KVector::Vec3 Row;
 
         private:
@@ -93,7 +93,7 @@ namespace KEngine{
 
                 Row col0(m[0][0], m[1][0], m[2][0]);
                 Row col1(m[0][1], m[1][1], m[2][1]);
-                Row col2(m[0][2], m[1][2], m[2][1]);
+                Row col2(m[0][2], m[1][2], m[2][2]);
 
                 this->values[0][0] = KFunction::dot(row0, col0);
                 this->values[0][1] = KFunction::dot(row0, col1);
@@ -156,16 +156,17 @@ namespace KEngine{
                 const Kfloat cof21 = -(values[0][0] * values[1][2] - values[1][0] * values[0][2]);
                 const Kfloat cof22 = values[0][0] * values[1][1] - values[1][0] * values[0][1];
 
+                //remember transposing matrix
                 values[0][0] = cof00 / detM;
-                values[0][1] = cof01 / detM;
-                values[0][2] = cof02 / detM;
+                values[0][1] = cof10 / detM;
+                values[0][2] = cof20 / detM;
 
-                values[1][0] = cof10 / detM;
+                values[1][0] = cof01 / detM;
                 values[1][1] = cof11 / detM;
-                values[1][2] = cof12 / detM;
+                values[1][2] = cof21 / detM;
 
-                values[2][0] = cof20 / detM;
-                values[2][1] = cof21 / detM;
+                values[2][0] = cof02 / detM;
+                values[2][1] = cof12 / detM;
                 values[2][2] = cof22 / detM;
 
                 return *this;
@@ -196,7 +197,7 @@ namespace KEngine{
             return KVector::Vec3(
                     KFunction::dot(v, m[0]),
                     KFunction::dot(v, m[1]),
-                    KFunction::dot(v, m[1])
+                    KFunction::dot(v, m[2])
             );
         }
         template <typename C>
@@ -218,7 +219,7 @@ namespace KEngine{
         std::ostream& operator<<(std::ostream &os, const Mat3 &m){
             os << m[0] << '\n';
             os << m[1] << '\n';
-            os << m[2] << '\n';
+            os << m[2];
             return os;
         }
     }

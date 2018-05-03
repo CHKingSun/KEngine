@@ -13,7 +13,8 @@
 
 namespace KEngine{
     namespace KVector{
-        struct Vec3{
+        class Vec3{
+        public:
             union {
                 Kfloat values[3];
                 struct { Kfloat x, y, z; };
@@ -99,7 +100,7 @@ namespace KEngine{
                 return KFunction::length<Vec3, F>(*this);
             }
             Kboolean isZero()const {
-                return KCore::isZero(length());
+                return KFunction::isZero(length());
             }
             template <typename F = Kdouble>
             F dot(const Vec3 &v)const {
@@ -108,7 +109,7 @@ namespace KEngine{
             Vec3& normalize(){
                 //maybe need judging length != 0
                 const auto len = length<Kfloat>();
-                if(!KCore::isZero(len)) this->operator/=(len);
+                if(!KFunction::isZero(len)) this->operator/=(len);
                 else set(static_cast<Kfloat>(KNAN));
                 return *this;
             }
@@ -123,7 +124,7 @@ namespace KEngine{
             F getAngle(const Vec3 &v)const {
                 const F len1 = length<F>();
                 const F len2 = v.length<F>();
-                if(KCore::isZero(len1) || KCore::isZero(len2)) return static_cast<F>(KNAN);
+                if(KFunction::isZero(len1) || KFunction::isZero(len2)) return static_cast<F>(KNAN);
 
                 return F(acos(dot<F>(v) / (len1 * len2)));
             }
@@ -134,12 +135,8 @@ namespace KEngine{
                 Kfloat rx = ty * vz - vy * tz;
                 Kfloat ry = - (tx * vz - vx * tz);
                 Kfloat rz = tx * vy - vx * ty;
-                return Vec3(rx, ty, rz);
+                return Vec3(rx, ry, rz);
             }
-            template <typename F = Kdouble>
-            static F getAngle(const Vec3 &v1, const Vec3 &v2){
-                return v1.getAngle<F>(v2);
-            };
         };
 
         Vec3 operator-(const Vec3 &v){
