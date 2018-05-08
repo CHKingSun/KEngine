@@ -5,7 +5,7 @@
 #ifndef KENGINE_LIGHT_H
 #define KENGINE_LIGHT_H
 
-#include "../KHeader.h"
+#include "../../KHeader.h"
 #include "../Vector/Vec3.h"
 #include "../Vector/Color.h"
 
@@ -17,6 +17,8 @@ namespace KEngine{
         };
 
         class Light{
+            friend class KController::LightController;
+
         private:
             Kuint id;
             LightType type;
@@ -30,12 +32,11 @@ namespace KEngine{
 
             tcolor ambient;
 
-            Light() = delete;
-            Light(Kuint id, LightType type = AMBIENT): id(id), enable(true), type(type),
-                 factor(1.0), ambient(tcolor(0.8, 0.8, 0.8, 1.0)){};
-            Light(Kuint id, const tcolor &ambient, LightType type = AMBIENT):
+            Light(LightType type = AMBIENT): enable(true), type(type),
+                 factor(1.0), ambient(KColor::WHITE){};
+            Light(const tcolor &ambient, LightType type = AMBIENT):
                     enable(true), type(type), factor(1.0), ambient(ambient){};
-            Light(Kuint id, const tcolor &ambient, const Kfloat &factor, LightType type = AMBIENT):
+            Light(const tcolor &ambient, const Kfloat &factor, LightType type = AMBIENT):
                     enable(true), type(type), factor(factor), ambient(ambient){};
 
             Light& operator=(const Light &light){

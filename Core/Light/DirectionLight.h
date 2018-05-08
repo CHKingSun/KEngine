@@ -5,7 +5,7 @@
 #ifndef KENGINE_DIRECTIONLIGHT_H
 #define KENGINE_DIRECTIONLIGHT_H
 
-#include "../KHeader.h"
+#include "../../KHeader.h"
 #include "../Vector/Color.h"
 #include "../Vector/Vec3.h"
 #include "../Matrix/Quaternion.h"
@@ -25,23 +25,21 @@ namespace KEngine{
 
             Kfloat shadowFactor;
 
-            DirectionLight() = delete;
-            DirectionLight(Kuint id):Light(id, DIRECTION), direction(tvec3()), shadowFactor(0.0),
-                      diffuse(tcolor(0.8, 0.8, 0.8, 1.0)), specular(tcolor(0.8, 0.8, 0.8, 1.0)){}
+            DirectionLight():Light(DIRECTION), direction(tvec3()), shadowFactor(0.0),
+                      diffuse(KColor::GREY), specular(KColor::GREY){}
 
-            DirectionLight(Kuint id, const tvec3 &dir):Light(id, DIRECTION), direction(dir),
-                      diffuse(tcolor(0.8, 0.8, 0.8, 1.0)), specular(tcolor(0.8, 0.8, 0.8, 1.0)),
+            DirectionLight(const tvec3 &dir):Light(DIRECTION), direction(dir),
+                      diffuse(KColor::GREY), specular(KColor::GREY),
                       shadowFactor(0.0){}
 
-            DirectionLight(Kuint id, const tvec3 &dir,
-                           const tcolor &ambient, const tcolor &diffuse, const tcolor &specular):
-                    Light(id, ambient, DIRECTION), direction(dir),
+            DirectionLight(const tvec3 &dir, const tcolor &ambient,
+                           const tcolor &diffuse, const tcolor &specular):
+                    Light(ambient, DIRECTION), direction(dir),
                     diffuse(diffuse), specular(specular), shadowFactor(0.0){}
 
-            DirectionLight(Kuint id, const tvec3 &dir,
-                           const tcolor &ambient, const tcolor &diffuse, const tcolor &specular,
-                           const Kfloat &factor, const Kfloat &shadowFactor):
-                    Light(id, ambient, factor, DIRECTION), direction(dir),
+            DirectionLight(const tvec3 &dir, const tcolor &ambient, const tcolor &diffuse,
+                           const tcolor &specular, const Kfloat &factor, const Kfloat &shadowFactor):
+                    Light(ambient, factor, DIRECTION), direction(dir),
                     diffuse(diffuse), specular(specular), shadowFactor(shadowFactor){}
 
             void rotate(const Kfloat &angle, const tvec3 &v){

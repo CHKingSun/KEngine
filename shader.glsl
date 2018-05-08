@@ -22,7 +22,7 @@ struct DLight{ //Direction light
     vec4 specular;
 };
 
-struct PLight{
+struct PLight{ //Point Light
     int type;
     bool enable;
     vec3 position;
@@ -37,7 +37,7 @@ struct PLight{
     float kc, kl, kq;
 };
 
-struct SLight{
+struct SLight{ //Spot Light
     int type;
     bool enable;
     vec3 position;

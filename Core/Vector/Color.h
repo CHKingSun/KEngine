@@ -5,7 +5,7 @@
 #ifndef KENGINE_COLOR_H
 #define KENGINE_COLOR_H
 
-#include "../KHeader.h"
+#include "../../KHeader.h"
 #include "Vec2.h"
 #include "Vec3.h"
 #include "Vec4.h"
@@ -112,13 +112,15 @@ namespace KEngine{
             }
         };
 
-        const Color BLACK(0, 0, 0, 1.0f);
-        const Color RED(1.0f, 0, 0, 1.0f);
-        const Color BLUE(0, 1.0f, 0, 1.0f);
-        const Color GREEN(0, 0, 1.0f, 1.0f);
-        const Color ORANGE(1.0f, 1.0f, 0, 1.0f);
-        const Color YELLOW(0, 1.0f, 1.0f, 1.0f);
-        const Color PINK(1.0f, 0, 1.0f, 1.0f);
+        static const Color BLACK(0, 0, 0, 1.0f);
+        static const Color RED(1.0f, 0, 0, 1.0f);
+        static const Color BLUE(0, 1.0f, 0, 1.0f);
+        static const Color GREEN(0, 0, 1.0f, 1.0f);
+        static const Color ORANGE(1.0f, 1.0f, 0, 1.0f);
+        static const Color YELLOW(0, 1.0f, 1.0f, 1.0f);
+        static const Color PINK(1.0f, 0, 1.0f, 1.0f);
+        static const Color WHITE(1.0f, 1.0f, 1.0f, 1.0f);
+        static const Color GREY(0.8, 0.8, 0.8, 1.0);
     }
 }
 

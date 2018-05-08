@@ -87,6 +87,21 @@ namespace KEngine{
 
     namespace KController{
         class LightController;
+        class CameraController;
+    }
+
+    namespace KRenderer{
+        class Renderer;
+        class Shader;
+    }
+
+    namespace KMaterial{
+        class Material;
+        class Texture;
+    }
+
+    namespace KWindow{
+        class Window;
     }
 }
 

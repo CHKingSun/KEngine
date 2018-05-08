@@ -4,7 +4,7 @@
 
 #include <iostream>
 
-#include "./Core/KHeader.h"
+#include "./KHeader.h"
 #include "./Core/function.h"
 #include "./Core/transform.h"
 #include "./Core/Vector/Vec2.h"
@@ -17,8 +17,9 @@
 #include "./Core/Light/PointLight.h"
 #include "./Core/Light/DirectionLight.h"
 #include "./Core/Light/SpotLight.h"
-#include "./Core/Controller/LightController.h"
+#include "./Controller/LightController.h"
 #include "./Core/Camera/Camera.h"
+#include "Render/Renderer.h"
 
 using namespace std;
 using namespace KEngine;
@@ -59,21 +60,23 @@ int main() {
             1, 4, 2,
             5, -3, 1
     ).determinant()<<endl;
-    cout<<PointLight(0)<<endl;
+    cout<<PointLight()<<endl;
     Mat4 rot = rotate(23.5, Vec3(1.9, 0, 1.2));
 //    cout<<Mat4(rot).inverse() * rot<<endl<<endl;
 //    cout<<rot.inverse()<<endl<<endl;
     cout<<Quaternion().fromMatrix(rot)<<endl<<endl;
     cout<<Quaternion(23.5, Vec3(1.9, 0, 1.2))<<endl<<endl;
     cout<<Quaternion(120, Vec3(1, 0, 1)) * Vec3(0, 0, 2)<<endl<<endl;
-    cout<<lookAt(Vec3(0, 0, 10), Vec3(0, 0, 0), Vec3(0, 1, 0))<<endl<<endl;
-    Camera camera(Vec3(10, 0, 0), Vec3(0, 0, 0), Vec3(0, 1, 0));
-    camera.setPosition(Vec3(0, 0, 10)).rotateView(90, Vec3(0, -1, 0));
+    cout<<lookAt(Vec3(10, 0, 0), Vec3(0, 0, -10), Vec3(0, 1, 0))<<endl<<endl;
+    Camera camera(Vec3(0, 0, 10), Vec3(0, 0, 0), Vec3(0, 1, 0));
+    camera.setPosition(Vec3(10, 0, 0)).rotateView(45, Vec3(0, -1, 0));
     cout<<camera.getView()<<endl<<endl;
 
-//    LightController controller;
-//    LightController::addAmbientLight(Color(1.0), 0.9);
-//    cout << LightController::getLight(0) << endl;
+    static auto *controller = new Renderer();
+    controller->lightController->addLight(new DirectionLight(Vec3(1, 0, 1)));
+    controller->lightController->addLight(new SpotLight(Vec3(1, 1, 1), Vec3(0, 0, 1)));
+    controller->lightController->deleteLight(0);
+    cout<<*(controller->lightController->at(0))<<endl;
 
     return 0;
 }

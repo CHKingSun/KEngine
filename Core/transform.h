@@ -11,7 +11,7 @@
 
 #include <cassert>
 #include <cmath>
-#include "KHeader.h"
+#include "../KHeader.h"
 #include "./Vector/Vec3.h"
 #include "./Vector/Vec4.h"
 #include "./Matrix/Mat4.h"
@@ -65,14 +65,15 @@ namespace KEngine{
 
         Mat4 lookAt(const Vec3 &eye, const Vec3 &center, const Vec3 &up){
             //if eye == center or up = 0, the matrix will be nan
-            const Vec3 z((center - eye).normalize());
-            const Vec3 x(Vec3::cross(z, up).normalize());
-            const Vec3 y(Vec3::cross(x, z).normalize());
+            //u-v-n is left-hand coordinate
+            const Vec3 n((center - eye).normalize());
+            const Vec3 u(Vec3::cross(n, up).normalize());
+            const Vec3 v(Vec3::cross(u, n).normalize());
 
             return Mat4(
-                    x.x, x.y, x.z, -dot<Vec3, Kfloat>(x, eye),
-                    y.x, y.y, y.z, -dot<Vec3, Kfloat>(y, eye),
-                    -z.x, -z.y, -z.z, dot<Vec3, Kfloat>(z, eye),
+                    u.x, u.y, u.z, -dot<Vec3, Kfloat>(u, eye),
+                    v.x, v.y, v.z, -dot<Vec3, Kfloat>(v, eye),
+                    -n.x, -n.y, -n.z, dot<Vec3, Kfloat>(n, eye),
                     0, 0, 0, 1
             );
         }

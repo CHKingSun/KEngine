@@ -5,7 +5,7 @@
 #ifndef KENGINE_CAMERA_H
 #define KENGINE_CAMERA_H
 
-#include "../KHeader.h"
+#include "../../KHeader.h"
 #include "../Vector/Vec3.h"
 #include "../Matrix/Mat4.h"
 #include "../transform.h"
@@ -68,12 +68,13 @@ namespace KEngine{
                 return *this;
             }
             Camera& setView(const tvec3 &eye, const tvec3 &center, const tvec3 &up){
-                const tvec3 z((center - eye).normalize());
-                const tvec3 x(tvec3::cross(z, up).normalize());
-                const tvec3 y(tvec3::cross(x, z).normalize());
+                //u-v-n is left-hand coordinate
+                const tvec3 n((center - eye).normalize());
+                const tvec3 u(tvec3::cross(n, up).normalize());
+                const tvec3 v(tvec3::cross(u, n).normalize());
 
                 position = eye;
-                view = tquaternion().fromMatrix(tmat3(x, y, -z));
+                view = tquaternion().fromMatrix(tmat3(u, v, -n));
                 updateViewMatrix();
                 return *this;
             }

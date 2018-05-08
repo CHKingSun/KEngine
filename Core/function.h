@@ -6,7 +6,7 @@
 #define KENGINE_FUNCTION_H
 
 #include <cmath>
-#include "KHeader.h"
+#include "../KHeader.h"
 
 namespace KEngine{
     namespace KFunction{
