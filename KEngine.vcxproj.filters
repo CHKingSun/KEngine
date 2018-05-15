@@ -48,9 +48,6 @@
     <ClInclude Include="src\Core\Matrix\Quaternion.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="src\Core\Vector\Color.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="src\Core\Vector\Vec2.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -85,6 +82,27 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="src\Render\Buffer\VertexBuffer.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Object\Plane.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Object\Face.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Core\Material\Color.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Core\Material\Texture.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Log.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Render\Buffer\UniformBlock.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Render\Buffer\BackBuffer.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

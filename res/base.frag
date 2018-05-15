@@ -16,7 +16,7 @@ in color{
 };
 in vec2 v_texcoord;
 
-uniform Texture textures[MAX_TEXTURE_NUM];
+uniform Texture u_textures[MAX_TEXTURE_NUM];
 
 out vec4 fragColor;
 
@@ -25,13 +25,31 @@ void main(){
     vec4 diffuse = vec4(0.0f);
     vec4 specular = vec4(0.0f);
 
-    for(int i = 0; i < MAX_TEXTURE_NUM; ++i){
-        if(textures[i].enable){
-            if(textures[i].type == 1) ambient = texture(textures[i].tex, v_texcoord);
-            else if(textures[i].type == 2) diffuse = texture(textures[i].tex, v_texcoord);
-            else if(textures[i].type == 3) specular = texture(textures[i].tex, v_texcoord);
+    bool flag[3] = bool[3]( false, false, false ); //no textures
+    for(int i = 0; i < MAX_TEXTURE_NUM; ++i) {
+        if(u_textures[i].enable) {
+            if(u_textures[i].type == 1) {
+                flag[0] = true;
+                ambient += texture(u_textures[i].tex, v_texcoord);
+            } else if(u_textures[i].type == 2) {
+                flag[1] = true;
+                diffuse += texture(u_textures[i].tex, v_texcoord);
+            } else if(u_textures[i].type == 3) {
+                flag[2] = true;
+                specular += texture(u_textures[i].tex, v_texcoord);
+            }
         }
     }
 
-    fragColor = ambient * v_ambient + diffuse * v_diffuse + specular * v_specular;
+    if(flag[0]) ambient *= v_ambient;
+    else ambient = v_ambient;
+
+    if(flag[1]) diffuse *= v_diffuse;
+    else diffuse = v_diffuse;
+
+    if(flag[2]) specular *= v_specular;
+    else specular = v_specular;
+
+    fragColor = (ambient + diffuse + specular) * vec4(v_texcoord, 0.0f, 1.0f);
+    // fragColor = vec4(v_texcoord, 0.0f, 1.0f);
 }

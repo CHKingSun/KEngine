@@ -21,7 +21,7 @@ namespace KEngine{
             std::vector<Light*> *lights;
             Light *defaultLight;
             Kuint nextId;
-            Kuint n_lights;
+			Ksize n_lights;
             const Ksize MAX_LIGHTS = 12;
 
         public:
@@ -37,6 +37,10 @@ namespace KEngine{
                 delete lights;
                 delete defaultLight;
             }
+
+			void bind() {
+
+			}
 
             Light* at(Kuint index)const {
                 if(lights == nullptr || index >= n_lights) return nullptr;
@@ -76,11 +80,14 @@ namespace KEngine{
             }
             Kuint addLight(Light *light){
                 if(n_lights == MAX_LIGHTS || light == nullptr) return 0; //return default id
-                if(lights == nullptr) lights = new std::vector<Light*>();
+				if (lights == nullptr) {
+					lights = new std::vector<Light*>();
+					lights->reserve(MAX_LIGHTS);
+				}
                 light->id = nextId;
                 //Maybe later will use for vectors to save each type lights;
                 //switch
-                lights->push_back(light);
+                lights->emplace_back(light);
                 ++n_lights;
                 defaultLight->enable = false;
                 return nextId++;

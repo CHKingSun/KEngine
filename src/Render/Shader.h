@@ -24,6 +24,15 @@ namespace KEngine{
 		case GL_UNSIGNED_INT: return sizeof(GLuint);
 		case GL_UNSIGNED_SHORT: return sizeof(GLushort);
 		case GL_UNSIGNED_BYTE: return sizeof(GLubyte);
+		case GL_FLOAT_VEC3: return sizeof(GLfloat) * 3;
+		case GL_FLOAT_VEC4: return sizeof(GLfloat) * 4;
+		case GL_FLOAT_MAT3: return sizeof(GLfloat) * 12;
+		//When we use mat3, it will devide into 3 vec3,
+		//but when GLSL read the buffer of vec3, it will read 4 value and discard the last value,
+		//thus, be sure to push mat4x3(3 vec4) data into the buffer or you may get what you don't want.
+		case GL_FLOAT_MAT4: return sizeof(GLfloat) * 16;
+		case GL_FLOAT_MAT2: return sizeof(GLfloat) * 4;
+		case GL_FLOAT_VEC2: return sizeof(GLfloat) * 2;
 		case GL_INT: return sizeof(GLint);
 		case GL_SHORT: return sizeof(GLshort);
 		case GL_BYTE: return sizeof(GLbyte);
@@ -40,6 +49,9 @@ namespace KEngine{
 		using tmat3 = KMatrix::Mat3;
 
         class Shader{
+			friend class KBuffer::UnifromBlock;
+			friend class KBuffer::BackBuffer;
+
         private:
             Kuint program;
             std::unordered_map<std::string, int> *uniforms;
@@ -59,6 +71,7 @@ namespace KEngine{
 				fread(data, 1, length, file);
 				fclose(file);
 				content = std::string(data);
+				//std::cout << content << std::endl;
 				delete[] data;
 				return true;
 #else
@@ -76,14 +89,19 @@ namespace KEngine{
                 auto it = uniforms->find(name);
                 if(it == uniforms->end()){
 					Kint loc = glGetUniformLocation(program, name.c_str());
-					uniforms->emplace(std::make_pair(name, loc));
+					uniforms->emplace(name, loc);
 					return loc;
                 }
 				return it->second;
             }
 
         public:
-            Shader(): program(0), uniforms(new std::unordered_map<std::string, int>()){}
+            Shader():uniforms(new std::unordered_map<std::string, int>()) {
+				program = glCreateProgram();
+                if(program == 0){
+                    std::cerr << "Create program failed!" << std::endl;
+                }
+			}
             Shader(const std::string &vs_filename, const std::string &fs_filename):
             uniforms(new std::unordered_map<std::string, int>()){
                 createProgram(vs_filename, fs_filename);
@@ -189,8 +207,12 @@ namespace KEngine{
                 return true;
             }
 
+			bool addShader(GLenum type, const std::string &filename)const {
+				return addShader(createShader(type, filename));
+			}
+
             bool isValid()const {
-                return glIsProgram(program);
+                return glIsProgram(program) == GL_TRUE;
             }
 
             void bind()const {
@@ -202,6 +224,7 @@ namespace KEngine{
             }
 
 			Kint getAttribLocation(const char* name)const {
+				if (!isValid()) return -2;
 				return glGetAttribLocation(program, name);
 			}
 
@@ -215,7 +238,23 @@ namespace KEngine{
                 glUniform1i(getLocation(name), value);
 			}
 
-			void bindUniform2f(const std::string &name, const tvec2& v) {
+			void bindUniform2f(const std::string &name, const tvec2& v)const {
+				if (!isValid()) return;
+				glUniform2fv(getLocation(name), 1, v.data());
+				//note: if we set count = 2 and with 2 vector data in,
+				//then this location will be set with v[0].data()
+				//and next location will be set with v[1].data()
+			}
+
+			void bindUniform3f(const std::string &name, const tvec3& v)const {
+				if (!isValid()) return;
+				glUniform3fv(getLocation(name), 1, v.data());
+				//note: if we set count = 2 and with 2 vector data in,
+				//then this location will be set with v[0].data()
+				//and next location will be set with v[1].data()
+			}
+
+			void bindUniform4f(const std::string &name, const tvec4& v)const {
 				if (!isValid()) return;
 				glUniform4fv(getLocation(name), 1, v.data());
 				//note: if we set count = 2 and with 2 vector data in,
@@ -223,28 +262,12 @@ namespace KEngine{
 				//and next location will be set with v[1].data()
 			}
 
-			void bindUniform3f(const std::string &name, const tvec3& v) {
-				if (!isValid()) return;
-				glUniform4fv(getLocation(name), 1, v.data());
-				//note: if we set count = 2 and with 2 vector data in,
-				//then this location will be set with v[0].data()
-				//and next location will be set with v[1].data()
-			}
-
-			void bindUniform4f(const std::string &name, const tvec4& v) {
-				if (!isValid()) return;
-				glUniform4fv(getLocation(name), 1, v.data());
-				//note: if we set count = 2 and with 2 vector data in,
-				//then this location will be set with v[0].data()
-				//and next location will be set with v[1].data()
-			}
-
-			void bindUniformMat3(const std::string &name, const tmat3 &m) {
+			void bindUniformMat3(const std::string &name, const tmat3 &m)const {
 				if (!isValid()) return;
 				glUniformMatrix3fv(getLocation(name), 1, GL_TRUE, m.data()); //our matrix is row-first
 			}
 
-			void bindUniformMat4(const std::string &name, const tmat4 &m) {
+			void bindUniformMat4(const std::string &name, const tmat4 &m)const {
 				if (!isValid()) return;
 				glUniformMatrix4fv(getLocation(name), 1, GL_TRUE, m.data()); //our matrix is row-first
 			}

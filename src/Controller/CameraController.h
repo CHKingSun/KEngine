@@ -67,8 +67,11 @@ namespace KEngine{
 
             Kboolean addCamera(Camera *camera){
                 if(camera == nullptr) return false;
-                if(cameras == nullptr) cameras = new std::vector<Camera*>();
-                cameras->push_back(camera);
+				if (cameras == nullptr) {
+					cameras = new std::vector<Camera*>();
+					cameras->reserve(6);
+				}
+                cameras->emplace_back(camera);
             }
         };
     }

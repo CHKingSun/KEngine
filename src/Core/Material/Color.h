@@ -6,9 +6,9 @@
 #define KENGINE_COLOR_H
 
 #include "../../KHeader.h"
-#include "Vec2.h"
-#include "Vec3.h"
-#include "Vec4.h"
+#include "../Vector/Vec2.h"
+#include "../Vector/Vec3.h"
+#include "../Vector/Vec4.h"
 
 //typeid
 //toFloat toHex toInt_2_10_10_10 toChar
@@ -17,7 +17,7 @@
 //BLACK WHITE RED BLUE GREEN YELLOW ORANGE PINK
 
 namespace KEngine{
-    namespace KColor{
+    namespace KMaterial{
         using namespace KVector;
 
         class Color:public Vec4{

@@ -78,7 +78,13 @@ namespace KEngine{
                 this->y *= v.y;
                 this->z *= v.z;
                 return *this;
-            }
+			}
+			inline Vec3& operator/=(const Vec3 &v) {
+				this->x /= v.x;
+				this->y /= v.y;
+				this->z /= v.z;
+				return *this;
+			}
 
             template <typename C>
             inline Vec3& operator*=(const C &c){
@@ -150,7 +156,10 @@ namespace KEngine{
         }
         Vec3 operator*(const Vec3 &v1, const Vec3 &v2){
             return Vec3(v1) *= v2;
-        }
+		}
+		Vec3 operator/(const Vec3 &v1, const Vec3 &v2) {
+			return Vec3(v1) /= v2;
+		}
         template <typename C>
         Vec3 operator*(const Vec3 &v, const C &c){
             return Vec3(v) *= c;

@@ -20,6 +20,7 @@ namespace KEngine{
     using Kint = int;
     using Kuint = unsigned int;
     using Ksize = unsigned int;
+	using Kushort = unsigned short;
     using Kchar = char;
     using Kuchar = unsigned char;
     using Kboolean = bool;
@@ -97,17 +98,21 @@ namespace KEngine{
 
 	namespace KBuffer {
 		class VertexBuffer;
-		class IndexBuffer;
 		class VertexArray;
+		class UnifromBlock;
+		class BackBuffer;
 	}
 
     namespace KMaterial{
+		class Color;
         class Material;
         class Texture;
     }
 
 	namespace KObject {
+		template <typename> class Face;
 		class Object3D;
+		class Plane;
 	}
 
     namespace KWindow{

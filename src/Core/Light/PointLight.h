@@ -12,7 +12,7 @@ namespace KEngine{
     namespace KLight{
         class PointLight: public Light{
             using tvec3 = KVector::Vec3;
-            using tcolor = KColor::Color;
+            using tcolor = KMaterial::Color;
 
         public:
             tvec3 position;
@@ -24,11 +24,11 @@ namespace KEngine{
             Kfloat kc, kl, kq; //attenuation factor
 
             PointLight():Light(POINT), position(tvec3()),
-                    diffuse(KColor::GREY), specular(KColor::GREY),
+                    diffuse(KMaterial::GREY), specular(KMaterial::GREY),
                     shadowFactor(0.0), kc(1.0), kl(0.09), kq(0.032){}
 
             PointLight(const tvec3 &pos):Light(POINT), position(pos),
-                    diffuse(KColor::GREY), specular(KColor::GREY),
+                    diffuse(KMaterial::GREY), specular(KMaterial::GREY),
                     shadowFactor(0.0), kc(1.0), kl(0.09), kq(0.032){}
 
             PointLight(const tvec3 &pos, const tcolor &ambient,

@@ -58,6 +58,7 @@ namespace KEngine{
                 this->z = 0;
             }
 
+			Quaternion& operator=(const Quaternion& q) = default;
             Quaternion& operator*=(const Quaternion &q){
                 //i*i = j*j = k*k = ijk = -1
                 //ij = k, ki = -k;

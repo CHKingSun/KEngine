@@ -12,7 +12,7 @@ namespace KEngine{
     namespace KLight{
         class SpotLight:public Light{
             using tvec3 = KVector::Vec3;
-            using tcolor = KColor::Color;
+            using tcolor = KMaterial::Color;
 
         public:
             tvec3 position;
@@ -26,13 +26,13 @@ namespace KEngine{
             Kfloat innerCutOff, outerCutOff; //cosine of angle
 
             SpotLight():Light(SPOT), position(tvec3()), direction(tvec3()),
-                     diffuse(KColor::GREY), specular(KColor::GREY),
+                     diffuse(KMaterial::GREY), specular(KMaterial::GREY),
                      innerCutOff(0.9978), outerCutOff(0.953), shadowFactor(0.0),
                      kc(1.0), kl(0.09), kq(0.032){}
 
             SpotLight(const tvec3 &pos, const tvec3 &dir):
                     Light(SPOT), position(pos), direction(dir),
-                    diffuse(KColor::GREY), specular(KColor::GREY),
+                    diffuse(KMaterial::GREY), specular(KMaterial::GREY),
                     innerCutOff(0.9978), outerCutOff(0.953), shadowFactor(0.0),
                     kc(1.0), kl(0.09), kq(0.032){}
 

@@ -7,7 +7,7 @@
 
 #include "../../KHeader.h"
 #include "../Vector/Vec3.h"
-#include "../Vector/Color.h"
+#include "../Material/Color.h"
 
 namespace KEngine{
     namespace KLight{
@@ -24,7 +24,7 @@ namespace KEngine{
             LightType type;
 
         public:
-            using tcolor = KColor::Color;
+            using tcolor = KMaterial::Color;
 
             bool enable;
 
@@ -33,11 +33,15 @@ namespace KEngine{
             tcolor ambient;
 
             Light(LightType type = AMBIENT): enable(true), type(type),
-                 factor(1.0), ambient(KColor::WHITE){};
+                 factor(1.0), ambient(KMaterial::WHITE){};
             Light(const tcolor &ambient, LightType type = AMBIENT):
                     enable(true), type(type), factor(1.0), ambient(ambient){};
             Light(const tcolor &ambient, const Kfloat &factor, LightType type = AMBIENT):
                     enable(true), type(type), factor(factor), ambient(ambient){};
+
+			void bind(const KRenderer::Shader *shader) {
+
+			}
 
             Light& operator=(const Light &light){
                 this->type = light.type;

@@ -1,5 +1,5 @@
 //
-// Create by KingSun on 2018/05/10
+// Created by KingSun on 2018/05/10
 //
 
 #ifndef KENGINE_VERTEX_ARRAY_H
@@ -7,6 +7,7 @@
 
 #include <unordered_set>
 #include <GL/glew.h>
+#include "../../Log.h"
 #include "../../KHeader.h"
 #include "./VertexBuffer.h"
 
@@ -36,13 +37,21 @@ namespace KEngine {
 				glBindVertexArray(0);
 			}
 
-			void allocate(const VertexBuffer& vb, Kint location, Kuint size, GLenum type,
+			void allocate(const VertexBuffer* vb, Kint location, Kuint size, GLenum type,
 				bool normalized = false, Kuint stride = 0, Kuint offset = 0) {
 				bind();
-				vb.bind();
+				vb->bind();
 				if (locations == nullptr) locations = new std::unordered_set<Kint>();
 				locations->insert(location);
 				glVertexAttribPointer(location, size, type, normalized, stride, (void*)offset);
+			}
+
+			void setVertexAttrib3f(Kint location, const KVector::Vec3& v)const {
+				glVertexAttrib3fv(location, v.data());
+			}
+
+			void setVertexAttrib2f(Kint location, const KVector::Vec2& v)const {
+				glVertexAttrib2fv(location, v.data());
 			}
 
 			void clearLocation() {
@@ -50,13 +59,15 @@ namespace KEngine {
 				locations = nullptr;
 			}
 
-			void enableVertexArray() {
+			void enableVertexArray()const {
+				if (locations == nullptr) return;
 				for (auto loc : *locations) {
 					glEnableVertexAttribArray(loc);
 				}
 			}
 
-			void disableVertexArray() {
+			void disableVertexArray()const {
+				if (locations == nullptr) return;
 				for (auto loc : *locations) {
 					glDisableVertexAttribArray(loc);
 				}

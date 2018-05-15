@@ -57,6 +57,10 @@ namespace KEngine{
 					return false;
 				}
 
+				glClearColor(0.17f, 0.17f, 0.17f, 1.0f);
+
+				std::cout << "Version: " << glGetString(GL_VERSION) << std::endl;
+
                 return true;
             }
 
@@ -99,7 +103,7 @@ namespace KEngine{
 			}
 
 			void mouseWheelEvent(Kdouble yoffset) {
-				std::cout << "Yaxis scroll: " << yoffset << std::endl;
+				if(is_focus) std::cout << "Yaxis scroll: " << yoffset << std::endl;
 			}
 
 			void cursorEvent(Kdouble xpos, Kdouble ypos) {
@@ -138,6 +142,14 @@ namespace KEngine{
 				return glfwWindowShouldClose(window) == GLFW_TRUE;
 			}
 
+			void clear() {
+				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			}
+
+			void setClearColor(const tcolor& color = tcolor(0.17f, 0.17f, 0.17f, 1.0f)) {
+				glClearColor(color.r, color.g, color.b, color.a);
+			}
+
 			void update() {
 				if (is_active) {
 					run_time = glfwGetTime() - pause_time;
@@ -152,49 +164,61 @@ namespace KEngine{
 				this->title = title;
 				glfwSetWindowTitle(window, this->title.c_str());
 			}
+
+			inline const Kdouble getRunTime()const {
+				return run_time;
+			}
+
+			inline KVector::Vec2 getMouse()const {
+				return KVector::Vec2(mx, my);
+			}
+
+			inline KVector::Vec2 getWindowSize()const {
+				return KVector::Vec2(width, height);
+			}
         };
 
 		void window_size_callback(GLFWwindow* window, int width, int height)
 		{
 			Window* win = static_cast<Window*>(glfwGetWindowUserPointer(window));
 			if(win != nullptr) win->resize(width, height);
-			win == nullptr;
+			win = nullptr;
 		}
 
 		void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
 			Window* win = static_cast<Window*>(glfwGetWindowUserPointer(window));
 			if (win != nullptr) win->keyEvent(key, action);
-			win == nullptr;
+			win = nullptr;
 		}
     
 		void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
 			Window* win = static_cast<Window*>(glfwGetWindowUserPointer(window));
 			if (win != nullptr) win->mouseEvent(button, action);
-			win == nullptr;
+			win = nullptr;
 		}
 
 		void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
 			Window* win = static_cast<Window*>(glfwGetWindowUserPointer(window));
 			if (win != nullptr) win->mouseWheelEvent(yoffset);
-			win == nullptr;
+			win = nullptr;
 		}
 
 		static void cursor_position_callback(GLFWwindow* window, double xpos, double ypos) {
 			Window* win = static_cast<Window*>(glfwGetWindowUserPointer(window));
 			if (win != nullptr) win->cursorEvent(xpos, ypos);
-			win == nullptr;
+			win = nullptr;
 		}
 	
 		void cursor_enter_callback(GLFWwindow* window, int entered) {
 			Window* win = static_cast<Window*>(glfwGetWindowUserPointer(window));
 			if (win != nullptr) win->focusEvent(entered != GLFW_FALSE);
-			win == nullptr;
+			win = nullptr;
 		}
 
 		void window_iconify_callback(GLFWwindow* window, int iconified) {
 			Window* win = static_cast<Window*>(glfwGetWindowUserPointer(window));
 			if (win != nullptr) win->iconifiedEvent(iconified != GLFW_FALSE);
-			win == nullptr;
+			win = nullptr;
 		}
 	}
 }
