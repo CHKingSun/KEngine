@@ -68,10 +68,10 @@ layout(std140, row_major) uniform model{
     vec3 u_mScale;
     mat3 u_mRotate;
     //model_view * vec4(position, 1.0) = u_mPos + (u_mRotate * (u_mScale * position));
-    //u_NMatrix * normal = u_mRotate * (u_mScale * normal)；
+    //u_NMatrix * normal = u_mRotate * (u_mScale * normal);
 };
 
-layout(std140, row_major) uniform material{
+layout(std140) uniform material{
     float u_shininess;
     vec4 u_ambient;
     vec4 u_diffuse;
@@ -189,6 +189,12 @@ void main() {
             }
         }
     }
+
+    vec4 minVal = vec4(0.0, 0.0, 0.0, 1.0);
+    vec4 maxVal = vec4(1.0, 1.0, 1.0, 1.0);
+    v_ambient = clamp(v_ambient, minVal, maxVal);
+    v_ambient = clamp(v_diffuse, minVal, maxVal);
+    v_ambient = clamp(v_specular, minVal, maxVal);
 
     if(flag[1]) {
         v_ambient *= u_ambient;

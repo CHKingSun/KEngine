@@ -10,6 +10,7 @@
 #include "./Window.h"
 #include "./Object/Plane.h"
 #include "./Render/Shader.h"
+#include "./Controller/CameraController.h"
 #include "./Render/Buffer/BackBuffer.h"
 
 //#define TEST
@@ -164,14 +165,24 @@ void test() {
 	using namespace KEngine;
 	using namespace KEngine::KBuffer;
 	using namespace KEngine::KRenderer;
+	using namespace KEngine::KVector;
 
 	auto window = new KEngine::KWindow::Window("KEngine");
 	auto shader = new Shader(RES_PATH + "base.vert", RES_PATH + "base.frag");
 	//auto shader = new Shader(ROOT_PATH + "res/vertex.glsl", ROOT_PATH + "res/fragment.glsl");
 	shader->bind();
+	KObject::Object3D::bindUniform(shader);
+	KMaterial::Material::bindUniform(shader);
 	auto plane = new KEngine::KObject::Plane(1, 1, 3, 3);
-	plane->translate(KEngine::KVector::Vec3(0.5, 0.2, 0.0));
-	plane->bindUniform(shader);
+	auto plane1 = new KEngine::KObject::Plane(1, 1, 3, 3);
+	plane1->translate(Vec3(-0.5, 0, 0));
+	plane->translate(Vec3(0.5, 0, 0));
+
+	auto material = new KMaterial::Material(KMaterial::Color(0.0, 0.1, 0.2, 0.6),
+		KMaterial::Color(0.0, 0.1, 0.2, 0.8));
+	material->addTexture(RES_PATH + "stone.png");
+	plane1->setMaterial(material);
+
 	//plane->setRenderMode(GL_FRONT_AND_BACK, GL_LINE);
 
 #if 0
@@ -214,10 +225,12 @@ void test() {
 		++count;
 		window->clear();
 
-		plane->setRotation(window->getRunTime() * 30, KVector::Vec3(1, 1, 1));
-		plane->bindRotation();
+		plane->setRotation(window->getRunTime() * 10, Vec3(0, 1, 0));
 
+		plane->bindTextures(shader);
 		plane->render();
+		plane1->bindTextures(shader);
+		plane1->render();
 
 		window->update();
 		if (window->getRunTime() - now >= 1.0) {
@@ -231,6 +244,7 @@ void test() {
 
 	delete shader;
 	delete window;
+	KMaterial::Texture::deleteAllTextures();
 
 #endif
  

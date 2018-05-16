@@ -100,9 +100,13 @@ namespace KEngine {
 				}
 			}
 
-			void bindUniform(const KRenderer::Shader* shader)const override {
-				Object3D::bindUniform(shader);
-				material->bind(shader);
+			void bind()const override {
+				Object3D::bind();
+				material->bind();
+			}
+
+			void bindTextures(const KRenderer::Shader* shader)const {
+				material->bindTextures(shader);
 			}
 
 			void render()const override {

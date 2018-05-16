@@ -32,7 +32,7 @@ namespace KEngine {
 				Kuint tfbo;
 				glGenBuffers(1, &tfbo);
 				glBindBuffer(GL_TRANSFORM_FEEDBACK_BUFFER, tfbo);
-				glBufferData(GL_TRANSFORM_FEEDBACK_BUFFER, bufferSize, nullptr, GL_STATIC_DRAW);
+				glBufferData(GL_TRANSFORM_FEEDBACK_BUFFER, bufferSize, nullptr, GL_DYNAMIC_DRAW);
 				buffers.emplace_back(tfbo);
 			}
 
@@ -56,7 +56,7 @@ namespace KEngine {
 				Kuint tfbo;
 				glGenBuffers(1, &tfbo);
 				glBindBuffer(GL_TRANSFORM_FEEDBACK_BUFFER, tfbo); //It also can be some other buffer you like
-				glBufferData(GL_TRANSFORM_FEEDBACK_BUFFER, bufferSize, nullptr, GL_STATIC_DRAW);
+				glBufferData(GL_TRANSFORM_FEEDBACK_BUFFER, bufferSize, nullptr, GL_DYNAMIC_DRAW);
 				buffers.emplace_back(tfbo);
 			}
 

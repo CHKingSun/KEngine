@@ -6,6 +6,7 @@
 #define KENGINE_CAMERA_H
 
 #include <string>
+#include <memory>
 #include "../../KHeader.h"
 #include "../Vector/Vec3.h"
 #include "../Matrix/Mat4.h"
@@ -30,7 +31,8 @@ namespace KEngine{
             tquaternion view; //view rotation
             tmat4 projection;
             tquaternion rotate; //camera rotation
-			mutable KBuffer::UnifromBlock* block;
+
+			static std::shared_ptr<KBuffer::UnifromBlock> block;
 
 			const static std::string PROJECTION;
 			const static std::string EYE;
@@ -43,28 +45,34 @@ namespace KEngine{
 			}
 
         public:
-            explicit Camera(const tvec3 &pos = tvec3()): position(pos), block(nullptr),
+            explicit Camera(const tvec3 &pos = tvec3()): position(pos),
                      view(tquaternion()), projection(tmat4()), rotate(tquaternion()) {} //ortho
             Camera(const tvec3 &eye, const tvec3 &center, const tvec3 &up):
-                    projection(tmat4()), rotate(tquaternion()), block(nullptr) {
+                    projection(tmat4()), rotate(tquaternion()) {
                 setView(eye, center, up);
             }
             Camera(const Kfloat &fovy, const Kfloat &aspect,
                    const Kfloat &zNear, const Kfloat &zFar,
-                   const tvec3 &pos = tvec3()):block(nullptr),
-                    position(pos), view(tquaternion()), rotate(tquaternion()) {
+                   const tvec3 &pos = tvec3()):position(pos),
+				view(tquaternion()), rotate(tquaternion()) {
                 setPerspective(fovy, aspect, zNear, zFar);
             }
+			~Camera() = default;
 
-			void bind(const KRenderer::Shader *shader)const {
-				if (block == nullptr) {
-					block = new KBuffer::UnifromBlock(shader, PROJECTION.c_str());
-					std::vector<KBuffer::BlockData> data;
-					data.reserve(3);
-					data.emplace_back(EYE.c_str(), position.data());
-					data.emplace_back(VIEW.c_str(), toViewMatrix().data());
-					data.emplace_back(PROJ.c_str(), projection.data());
-					block->allocate(data);
+			static void bindUniform(const KRenderer::Shader *shader) {
+				block = std::make_shared<KBuffer::UnifromBlock>(shader, PROJECTION.c_str());
+				block->prepare(std::vector<const char*>{
+					EYE.c_str(), VIEW.c_str(), PROJ.c_str()
+				});
+			}
+
+			void bind()const {
+				if (block != nullptr) {
+					block->allocate(std::vector<KBuffer::BlockData>{
+						{ EYE.c_str(), position.data() },
+						{ VIEW.c_str(), toViewMatrix().data() },
+						{ PROJ.c_str(), projection.data() }
+					});
 				}
 			}
 
@@ -120,6 +128,8 @@ namespace KEngine{
 		const std::string Camera::EYE("p_eye");
 		const std::string Camera::VIEW("u_view");
 		const std::string Camera::PROJ("u_proj");
+
+		std::shared_ptr<KBuffer::UnifromBlock> Camera::block(nullptr);
     }
 }
 

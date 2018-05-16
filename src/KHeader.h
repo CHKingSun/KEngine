@@ -74,10 +74,6 @@ namespace KEngine{
         class Quaternion;
     }
 
-    namespace KColor{
-        class Color;
-    }
-
     namespace KLight{
         class Light;
         class PointLight;

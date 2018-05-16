@@ -41,10 +41,18 @@ namespace KEngine {
 				id = getTextureId(path);
 			}
 			~Texture() {
-				if (glIsTexture(id)) glDeleteTextures(1, &id);
-				//remember that you share you textures with other objects,
+				//if (glIsTexture(id)) glDeleteTextures(1, &id);
+				//remember that you share your textures with other objects,
 				//so some day when you get wrong with texture, maybe here.
-				texPaths.erase(path);
+				//Oh yeah I got no texture hours later.
+				//texPaths.erase(path);
+			}
+
+			static void deleteAllTextures() {
+				for (auto &it : texPaths) {
+					glDeleteTextures(1, &(it.second));
+				}
+				texPaths.clear();
 			}
 
 			Kuint getTextureId(const std::string &path)const {

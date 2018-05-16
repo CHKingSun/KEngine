@@ -9,6 +9,7 @@
 
 #include <string>
 #include <vector>
+#include <memory>
 #include <GL/glew.h>
 #include "../../KHeader.h"
 #include "./Texture.h"
@@ -25,8 +26,9 @@ namespace KEngine{
             Color diffuse;
             Color specular;
             Kfloat shininess;
-			mutable KBuffer::UnifromBlock* block;
             std::vector<Texture*> *textures;
+
+			static std::shared_ptr<KBuffer::UnifromBlock> block;
 
 			const static std::string MATERIAL;
 			const static std::string AMBIENT;
@@ -38,11 +40,11 @@ namespace KEngine{
 
             Material(const Color &ka = WHITE, const Color &kd = GREY,
                      const Color &ks = GREY, Kfloat shininess = 1.0f): shininess(shininess),
-                    ambient(ka), diffuse(kd), specular(ks), textures(nullptr), block(nullptr){}
+                    ambient(ka), diffuse(kd), specular(ks), textures(nullptr){}
             Material(std::vector<Texture*> *tex, const Color &ka = WHITE,
                      const Color &kd = GREY, const Color &ks = GREY,
                      Kfloat shininess = 1.0f): ambient(ka), diffuse(kd), specular(ks),
-                     shininess(shininess), textures(tex), block(nullptr){}
+                     shininess(shininess), textures(tex){}
             ~Material(){
                 deleteAllTextures();
                 delete textures;
@@ -59,25 +61,32 @@ namespace KEngine{
                 textures->emplace_back(new Texture(path, type));
             }
 
-            void bind(const KRenderer::Shader *shader)const {
-				if (block == nullptr) {
-					using namespace KBuffer;
-					block = new UnifromBlock(shader, MATERIAL.c_str());
-					std::vector<BlockData> data;
-					data.reserve(4);
-					data.emplace_back(AMBIENT.c_str(), ambient.data());
-					data.emplace_back(DIFFUSE.c_str(), diffuse.data());
-					data.emplace_back(SPECULAR.c_str(), specular.data());
-					data.emplace_back(SHININESS.c_str(), &shininess);
-					block->allocate(data);
+			static void bindUniform(const KRenderer::Shader *shader) {
+				block = std::make_shared<KBuffer::UnifromBlock>(shader, MATERIAL.c_str());
+				block->prepare(std::vector<const char*>{
+					AMBIENT.c_str(), DIFFUSE.c_str(), SPECULAR.c_str(), SHININESS.c_str()
+				});
+			}
+
+            void bind()const {
+				if (block != nullptr) {
+					block->allocate(std::vector<KBuffer::BlockData>{
+						{ AMBIENT.c_str(), ambient.data() },
+						{ DIFFUSE.c_str(), diffuse.data() },
+						{ SPECULAR.c_str(), specular.data() },
+						{ SHININESS.c_str(), &shininess }
+					});
 				}
+            }
+
+			void bindTextures(const KRenderer::Shader *shader)const {
 				if (textures != nullptr) {
 					int i = 0;
 					for (auto &it : *textures) {
-						it->bind(shader, ++i);
+						it->bind(shader, i++); //note: use ++i maybe you will got some different answer.
 					}
 				}
-            }
+			}
 
 			void activeTextures(const KRenderer::Shader *shader)const {
 				if (textures != nullptr) {
@@ -117,6 +126,8 @@ namespace KEngine{
 		const std::string Material::DIFFUSE("u_diffuse");
 		const std::string Material::SPECULAR("u_specular");
 		const std::string Material::SHININESS("u_shininess");
+
+		std::shared_ptr<KBuffer::UnifromBlock> Material::block(nullptr);
     }
 }
 

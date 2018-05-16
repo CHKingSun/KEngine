@@ -9,6 +9,7 @@
 //Nmatrix = mat3(modelMatrix)
 
 #include <string>
+#include <memory>
 #include "../KHeader.h"
 #include "../Core/Vector/Vec3.h"
 #include "../Core/Matrix/Quaternion.h"
@@ -24,14 +25,15 @@ namespace KEngine {
 		class Object3D {
 		protected :
 			KVector::Vec3 position;
-			KMatrix::Quaternion rotation;
+			KMatrix::Quaternion rotation; //Maybe it's better to use matrix now.
 			KVector::Vec3 m_scale;
 
 			KBuffer::VertexArray* vao;
 			KBuffer::VertexBuffer* ibo;
-			mutable KBuffer::UnifromBlock* block;
 
 			std::string type;
+
+			static std::shared_ptr<KBuffer::UnifromBlock> block;
 
 			const static std::string MODEL;
 			const static std::string U_POSITION;
@@ -45,7 +47,7 @@ namespace KEngine {
 		protected:
 			Object3D(std::string type) : type(type), vao(nullptr), ibo(nullptr),
 				position(KVector::Vec3(0)), rotation(KMatrix::Quaternion()),
-				m_scale(KVector::Vec3(1.0f)), block(nullptr){};
+				m_scale(KVector::Vec3(1.0f)){};
 
 		public:
 			virtual ~Object3D() {
@@ -58,12 +60,26 @@ namespace KEngine {
 				return type;
 			}
 
-			void bind()const {
+			static void bindUniform(const KRenderer::Shader* shader) {
+				block = std::make_shared<KBuffer::UnifromBlock>(shader, MODEL.c_str());
+				block->prepare(std::vector<const char*>{
+					U_POSITION.c_str(), U_ROTATION.c_str(), U_SCALE.c_str()
+				});
+			}
+
+			virtual void bind()const {
 				if (vao != nullptr) {
 					vao->bind();
 					vao->enableVertexArray();
 				}
 				if(ibo != nullptr) ibo->bind();
+				if (block != nullptr) {
+					block->allocate(std::vector<KBuffer::BlockData>{
+						{ U_POSITION.c_str(), position.data() },
+						{ U_ROTATION.c_str(), rotation.toMat4().data() },
+						{ U_SCALE.c_str(), m_scale.data() }
+					});
+				}
 			}
 
 			void unBind()const {
@@ -71,7 +87,7 @@ namespace KEngine {
 					vao->unBind();
 					vao->disableVertexArray();
 				}
-				if(ibo != nullptr) ibo->unBind();
+				if (ibo != nullptr) ibo->unBind();
 			}
 
 			void setPosition(const KVector::Vec3& v) {
@@ -98,34 +114,6 @@ namespace KEngine {
 				m_scale *= v;
 			}
 
-			virtual void bindUniform(const KRenderer::Shader* shader)const {
-				if (block == nullptr) {
-					using namespace KBuffer;
-					block = new UnifromBlock(shader, MODEL.c_str());
-					std::vector<BlockData> data;
-					data.reserve(3);
-					data.emplace_back(U_POSITION.c_str(), position.data());
-					data.emplace_back(U_ROTATION.c_str(), rotation.toMat4().data());
-					data.emplace_back(U_SCALE.c_str(), m_scale.data());
-					block->allocate(data);
-				}
-			}
-
-			void bindPosition()const {
-				if (block == nullptr) return;
-				block->reAllocate(KBuffer::BlockData(U_POSITION.c_str(), position.data()));
-			}
-
-			void bindRotation()const {
-				if (block == nullptr) return;
-				block->reAllocate(KBuffer::BlockData(U_ROTATION.c_str(), rotation.toMat4().data()));
-			}			
-			
-			void bindScale()const {
-				if (block == nullptr) return;
-				block->reAllocate(KBuffer::BlockData(U_SCALE.c_str(), m_scale.data()));
-			}
-
 			inline void setRenderMode(GLenum face = GL_FRONT_AND_BACK,
 				GLenum mode = GL_FILL)const {
 				glPolygonMode(face, mode);
@@ -144,6 +132,8 @@ namespace KEngine {
 		const Kint Object3D::A_POSITION = 1;
 		const Kint Object3D::A_NORMAL = 2;
 		const Kint Object3D::A_TEXCOORD = 3;
+
+		std::shared_ptr<KBuffer::UnifromBlock> Object3D::block(nullptr);
 	}
 }
 
