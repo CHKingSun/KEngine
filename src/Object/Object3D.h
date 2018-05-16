@@ -111,19 +111,24 @@ namespace KEngine {
 				}
 			}
 
-			void reBindPosition() {
+			void bindPosition()const {
 				if (block == nullptr) return;
 				block->reAllocate(KBuffer::BlockData(U_POSITION.c_str(), position.data()));
 			}
 
-			void reBindRotation() {
+			void bindRotation()const {
 				if (block == nullptr) return;
 				block->reAllocate(KBuffer::BlockData(U_ROTATION.c_str(), rotation.toMat4().data()));
 			}			
 			
-			void reBindScale() {
+			void bindScale()const {
 				if (block == nullptr) return;
 				block->reAllocate(KBuffer::BlockData(U_SCALE.c_str(), m_scale.data()));
+			}
+
+			inline void setRenderMode(GLenum face = GL_FRONT_AND_BACK,
+				GLenum mode = GL_FILL)const {
+				glPolygonMode(face, mode);
 			}
 
 			virtual Ksize getCount()const = 0;

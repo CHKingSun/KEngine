@@ -15,13 +15,13 @@ namespace KEngine {
 		class BackBuffer{
 		private:
 			Kuint program;
-			Kuint bufferSize;
+			Ksize bufferSize;
 			std::vector<Kuint> buffers;
 
 		public:
 			BackBuffer(const KRenderer::Shader* shader, const std::vector<std::string>& varyings,
-				Kuint bufferSize) : program(shader->program), bufferSize(bufferSize) {
-				Kuint count = varyings.size();
+				Ksize bufferSize) : program(shader->program), bufferSize(bufferSize) {
+				Ksize count = varyings.size();
 				const auto names = new const char*[count];
 				for (int i = 0; i < count; ++i) {
 					names[i] = varyings[i].data();
@@ -39,7 +39,7 @@ namespace KEngine {
 			BackBuffer(const KRenderer::Shader* shader, const std::vector<std::string>& varyings,
 				const std::vector<Kuint>& buffers, GLenum bufferMode)
 				: program(shader->program), buffers(buffers), bufferSize(0) {
-				Kuint count = varyings.size();
+				Ksize count = varyings.size();
 				const auto names = new const char*[count];
 				for (int i = 0; i < count; ++i) {
 					names[i] = varyings[i].data();
@@ -48,8 +48,8 @@ namespace KEngine {
 				glLinkProgram(program);
 			}
 
-			BackBuffer(const KRenderer::Shader* shader, const Kchar* const* varyings, Kuint count,
-				Kuint bufferSize) : program(shader->program), bufferSize(bufferSize) {
+			BackBuffer(const KRenderer::Shader* shader, const Kchar* const* varyings, Ksize count,
+				Ksize bufferSize) : program(shader->program), bufferSize(bufferSize) {
 				glTransformFeedbackVaryings(program, count, varyings, GL_INTERLEAVED_ATTRIBS);
 				glLinkProgram(program);
 
@@ -60,7 +60,7 @@ namespace KEngine {
 				buffers.emplace_back(tfbo);
 			}
 
-			BackBuffer(const KRenderer::Shader* shader, const Kchar* const* varyings, Kuint count,
+			BackBuffer(const KRenderer::Shader* shader, const Kchar* const* varyings, Ksize count,
 				const std::vector<Kuint>& buffers, GLenum bufferMode)
 				: program(shader->program), buffers(buffers), bufferSize(0) {
 				glTransformFeedbackVaryings(program, count, varyings, bufferMode);

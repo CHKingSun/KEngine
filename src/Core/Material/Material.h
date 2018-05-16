@@ -54,10 +54,9 @@ namespace KEngine{
                 delete textures;
                 textures = tex;
             }
-            void addTexture(Texture *tex) {
-                if(tex == nullptr) return;
+            void addTexture(const std::string &path, TextureType type = TextureType::DIFFUSE) {
                 if(textures == nullptr) textures = new std::vector<Texture*>();
-                textures->emplace_back(tex);
+                textures->emplace_back(new Texture(path, type));
             }
 
             void bind(const KRenderer::Shader *shader)const {

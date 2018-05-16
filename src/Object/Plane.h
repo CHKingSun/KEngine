@@ -21,9 +21,9 @@ namespace KEngine {
 		//a plane which center is in origin and normal is vec3(0, 1, 0)
 		class Plane : public Object3D {
 		private:
-			tvec2* vertices; //left z to default(0)
-			tvec2* tex_coord;
-			Face<Kushort>* indices;
+			std::vector<tvec2>* vertices; //left z to default(0)
+			std::vector<tvec2>* tex_coord;
+			std::vector<Face<Kuint>>* indices;
 			Kuint count;
 			KMaterial::Material* material;
 
@@ -34,45 +34,54 @@ namespace KEngine {
 				Kfloat pery = height / yslices;
 				for (int i = 0; i < xslices; ++i) {
 					for (int j = 0; j < yslices; ++j) {
+						Kfloat x = px + perx * i;
+						Kfloat y = py + pery * j;
+
+						vertices->emplace_back(x, y);
+						vertices->emplace_back(x + perx, y);
+						vertices->emplace_back(x + perx, y + pery);
+						vertices->emplace_back(x, y + pery);
+
+						tex_coord->emplace_back(0.0f, 0.0f);
+						tex_coord->emplace_back(1.0f, 0.0f);
+						tex_coord->emplace_back(1.0f, 1.0f);
+						tex_coord->emplace_back(0.0f, 1.0f);
+
 						Kuint t = (i * xslices + j) * 4;
-						Kfloat offsetx = perx * i;
-						Kfloat offsety = pery * j;
-
-						vertices[t] = tvec2(px, py);
-						vertices[t + 1] = tvec2(px + offsetx, py);
-						vertices[t + 2] = tvec2(px + offsetx, py + offsety);
-						vertices[t + 3] = tvec2(px, py + offsety);
-
-						tex_coord[t] = tvec2(0.0f, 0.0f);
-						tex_coord[t + 1] = tvec2(1.0f, 0.0f);
-						tex_coord[t + 2] = tvec2(1.0f, 1.0f);
-						tex_coord[t + 3] = tvec2(0.0f, 1.0f);
-
-						indices[t / 2] = Face<Kushort>(t, t + 1, t + 2);
-						indices[t / 2 + 1] = Face<Kushort>(t + 2, t + 3, t);
+						indices->emplace_back(t, t + 1, t + 2);
+						indices->emplace_back(t + 2, t + 3, t);
 					}
 				}
+
+				//for (auto it : *vertices) {
+				//	std::cout << it << std::endl;
+				//}
+				//for (auto it : *indices) {
+				//	std::cout << it << std::endl;
+				//}
 			}
 
 			void initArray() {
 				vao = new KBuffer::VertexArray();
-				KBuffer::VertexBuffer(vertices, sizeof(tvec2) * count * 4);
-				vao->allocate(new KBuffer::VertexBuffer(vertices, sizeof(tvec2) * count * 4), A_POSITION, 2, GL_FLOAT);
-				KBuffer::VertexBuffer tbo(tex_coord, sizeof(tvec2) * count * 4);
-				vao->allocate(new KBuffer::VertexBuffer(tex_coord, sizeof(tvec2) * count * 4), A_TEXCOORD, 2, GL_FLOAT);
+				vao->allocate(new KBuffer::VertexBuffer(vertices->data(), sizeof(tvec2) * count * 4), A_POSITION, 2, GL_FLOAT);
+				vao->allocate(new KBuffer::VertexBuffer(tex_coord->data(), sizeof(tvec2) * count * 4), A_TEXCOORD, 2, GL_FLOAT);
 				vao->setVertexAttrib3f(A_NORMAL, tvec3(0.0f, 1.0f, 0.0f));
-				ibo = new KBuffer::VertexBuffer(indices, sizeof(Kushort) * count * 2, KBuffer::BufferType::INDEX);
-				vao->setVertexAttrib3f(A_NORMAL, KVector::Vec3(0, 1, 0));
+				ibo = new KBuffer::VertexBuffer(indices->data(), sizeof(Kuint) * count * 6, KBuffer::BufferType::INDEX);
 			}
 
 		public:
 			Plane(Kfloat width = 1.0f, Kfloat height = 1.0f,
-				Ksize xslices = 1, Ksize yslices = 1): Object3D("Plane") {
+				Ksize xslices = 1, Ksize yslices = 1): Object3D("Plane"),
+				vertices(nullptr), tex_coord(nullptr), indices(nullptr){
 				count = xslices * yslices;
-				vertices = new tvec2[count * 4];
-				tex_coord = new tvec2[count * 4];
-				indices = new Face<Kushort>[count * 2];
+				vertices = new std::vector<tvec2>();
+				vertices->reserve(count * 4);
+				tex_coord = new std::vector<tvec2>();
+				tex_coord->reserve(count * 4);
+				indices = new std::vector<Face<Kuint>>();
+				indices->reserve(count * 2);
 				material = new KMaterial::Material();
+				material->addTexture(RES_PATH + "wall_texture.jpg");
 
 				generate(width, height, xslices, yslices);
 				initArray();
@@ -99,7 +108,7 @@ namespace KEngine {
 			void render()const override {
 				bind();
 
-				glDrawElements(GL_TRIANGLES, count * 6, GL_UNSIGNED_SHORT, nullptr);
+				glDrawElements(GL_TRIANGLES, count * 6, GL_UNSIGNED_INT, nullptr);
 
 				unBind();
 			}

@@ -9,10 +9,8 @@
 #include "./Log.h"
 #include "./Window.h"
 #include "./Object/Plane.h"
-#include "./Render/Renderer.h"
+#include "./Render/Shader.h"
 #include "./Render/Buffer/BackBuffer.h"
-
-const std::string ROOT_PATH = "./";
 
 //#define TEST
 #ifdef TEST
@@ -167,146 +165,71 @@ void test() {
 	using namespace KEngine::KBuffer;
 	using namespace KEngine::KRenderer;
 
-	auto *window = new KEngine::KWindow::Window("KEngine");
-	auto *renderer = new KEngine::KRenderer::Renderer(ROOT_PATH + "res/base.vert", ROOT_PATH + "res/base.frag");
-	//auto *renderer = new KEngine::KRenderer::Renderer(ROOT_PATH + "res/vertex.glsl", ROOT_PATH + "res/fragment.glsl");
-	auto *plane = new KEngine::KObject::Plane();
-	renderer->addObject(plane);
-	plane->translate(KEngine::KVector::Vec3(0.2, 0.2, 0.0));
-	//plane->reBindScale();
-	//plane = nullptr;
+	auto window = new KEngine::KWindow::Window("KEngine");
+	auto shader = new Shader(RES_PATH + "base.vert", RES_PATH + "base.frag");
+	//auto shader = new Shader(ROOT_PATH + "res/vertex.glsl", ROOT_PATH + "res/fragment.glsl");
+	shader->bind();
+	auto plane = new KEngine::KObject::Plane(1, 1, 3, 3);
+	plane->translate(KEngine::KVector::Vec3(0.5, 0.2, 0.0));
+	plane->bindUniform(shader);
+	//plane->setRenderMode(GL_FRONT_AND_BACK, GL_LINE);
 
-#if 1
-	auto vertices = new Kfloat[8]{
-		-0.5f, -0.5f,
-		 0.5f, -0.5f,
-		 0.5f,  0.5f,
-		-0.5f,  0.5f
+#if 0
+	glEnable(GL_RASTERIZER_DISCARD);
+	auto backShader = new KRenderer::Shader();
+	backShader->addShader(GL_VERTEX_SHADER, ROOT_PATH + "res/base.vert");
+	std::vector<std::string> varyings = {
+		"b_pos"
+		//"b_scale",
+		//"b_rotate"
+		//"b_out"
 	};
+	using OutData = /*KMatrix::Mat4; //*/KVector::Vec3;
+	auto tfbo = new BackBuffer(backShader, varyings, sizeof(OutData) * plane->getCount());
+	backShader->bind();
+	tfbo->bind();
+	glCall(;);
 
-	auto texCoords = new Kfloat[8]{
-		0.0f, 0.0f,
-		1.0f, 0.0f,
-		1.0f, 1.0f,
-		0.0f, 1.0f
-	};
+	plane->bind();
+	tfbo->enable(GL_TRIANGLES);
+	plane->render();
+	tfbo->disable();
 
-	auto indices = new Kushort[6]{
-		0, 1, 2,
-		2, 3, 0
-	};
-#else
-	Kfloat vertices[8] = {
-		-0.5f, -0.5f,
-		0.5f, -0.5f,
-		0.5f,  0.5f,
-		-0.5f,  0.5f
-	};
-
-	Kfloat texCoords[8] = {
-		0.0f, 0.0f,
-		1.0f, 0.0f,
-		1.0f, 1.0f,
-		0.0f, 1.0f
-	};
-
-	Kushort indices[6] = {
-		0, 1, 2,
-		2, 3, 0
-	};
-#endif
-
-	/*GLuint vao, vbo, tbo, ibo;
-	glGenVertexArrays(1, &vao);
-	glBindVertexArray(vao);
-
-	std::cout << sizeof(Kfloat) * 8 << ", " << sizeof(vertices) << std::endl;
-	std::cout << sizeof(Kushort) * 6 << ", " << sizeof(indices) << std::endl;
-
-	glGenBuffers(1, &vbo);
-	glBindBuffer(GL_ARRAY_BUFFER, vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(Kfloat) * 8, vertices, GL_STATIC_DRAW);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
-
-	glGenBuffers(1, &tbo);
-	glBindBuffer(GL_ARRAY_BUFFER, tbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(Kfloat) * 8, texCoords, GL_STATIC_DRAW);
-	glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, 0, nullptr);
-
-	glGenBuffers(1, &ibo);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(Kushort) * 6, indices, GL_STATIC_DRAW);*/
-
-	glCall(auto vao = new VertexArray(););
-	glCall(vao->allocate(new VertexBuffer(vertices, sizeof(Kfloat) * 8), 1, 2, GL_FLOAT));
-	glCall(vao->allocate(new VertexBuffer(texCoords, sizeof(Kfloat) * 8), 3, 2, GL_FLOAT));
-	glCall(auto ibo = new VertexBuffer(indices, sizeof(Kushort) * 6, KEngine::KBuffer::INDEX));
-
-	{
-		glEnable(GL_RASTERIZER_DISCARD);
-		auto backShader = new KRenderer::Shader();
-		backShader->addShader(GL_VERTEX_SHADER, ROOT_PATH + "res/base.vert");
-		std::vector<std::string> varyings = {
-			"b_pos",
-			"b_scale",
-			"b_rotate"
-			//"b_out"
-		};
-		using OutData = /*KMatrix::Mat4; //*/KVector::Vec3;
-		auto tfbo = new BackBuffer(renderer->getShader(), varyings, sizeof(OutData) * 5 * 6);
-		backShader->bind();
-		tfbo->bind();
-		glCall(;)
-
-		vao->bind();
-		vao->enableVertexArray();
-		ibo->bind();
-		tfbo->enable(GL_TRIANGLES);
-		glPointSize(10.0);
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, nullptr);
-		tfbo->disable();
-		vao->disableVertexArray();
-
-		const auto data = tfbo->getData<OutData>();
-		Kuint size = tfbo->getBufferSize() / sizeof(OutData);
-		for (int i = 0; i < size; ++i) {
-			std::cout << data[i] << std::endl;
-		}
-		
-		delete tfbo;
-		delete backShader;
-		glDisable(GL_RASTERIZER_DISCARD);
+	const auto data = tfbo->getData<OutData>();
+	Ksize size = tfbo->getBufferSize() / sizeof(OutData);
+	for (int i = 0; i < size; ++i) {
+		std::cout << data[i] << std::endl;
 	}
+		
+	delete tfbo;
+	delete backShader;
+	shader->bind();
+	glDisable(GL_RASTERIZER_DISCARD);
+#endif // FEEDBACK
 
+	Kdouble now = window->getRunTime();
+	Ksize count = 0;
 	while (!window->closed())
 	{
+		++count;
 		window->clear();
-		renderer->render();
 
-		vao->bind();
-		vao->enableVertexArray();
-		ibo->bind();
+		plane->setRotation(window->getRunTime() * 30, KVector::Vec3(1, 1, 1));
+		plane->bindRotation();
 
-		plane->setRotation(window->getRunTime(), KVector::Vec3(1, 0, 0));
-		plane->reBindRotation();
-
-		//glBindVertexArray(vao);
-		//glEnableVertexAttribArray(1);
-		//glEnableVertexAttribArray(2);
-		//glEnableVertexAttribArray(3);
-		//glCall(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo));
-
-		glPointSize(10.0);
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, nullptr);
-
-		vao->disableVertexArray();
+		plane->render();
 
 		window->update();
+		if (window->getRunTime() - now >= 1.0) {
+			std::cout << count << "fps" << std::endl;
+			count = 0;
+			now = window->getRunTime();
+		}
 	}
 
 	//glCall(std::cin.get();)
 
-	delete renderer;
+	delete shader;
 	delete window;
 
 #endif

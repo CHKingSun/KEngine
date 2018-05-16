@@ -14,6 +14,9 @@
 #endif
 #define KNAN nan("Nan")
 
+const std::string ROOT_PATH = "./";
+const std::string RES_PATH = ROOT_PATH + "res/";
+
 namespace KEngine{
     using Kfloat = float;
     using Kdouble = double;
@@ -92,7 +95,6 @@ namespace KEngine{
     }
 
     namespace KRenderer{
-        class Renderer;
         class Shader;
     }
 

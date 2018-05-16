@@ -68,7 +68,7 @@ layout(std140, row_major) uniform model{
     vec3 u_mScale;
     mat3 u_mRotate;
     //model_view * vec4(position, 1.0) = u_mPos + (u_mRotate * (u_mScale * position));
-    //u_NMatrix * normal = u_mRotate * (u_mScale * normal)
+    //u_NMatrix * normal = u_mRotate * (u_mScale * normal)；
 };
 
 layout(std140, row_major) uniform material{
@@ -151,10 +151,6 @@ void main() {
     v_diffuse = vec4(0.0f);
     v_specular = vec4(0.0f);
 
-    b_pos = u_mPos;
-    b_scale = u_mScale;
-    b_rotate = u_mRotate;
-
     vec3 m_pos = u_mPos + (u_mRotate * (u_mScale * a_position));
     gl_Position = vec4(m_pos, 1.0);
     // gl_Position = u_proj * (u_view * vec4(m_pos, 1.0));
@@ -208,7 +204,10 @@ void main() {
         // v_specular = u_specular;
     }
 
-    b_out = mat4(vec4(a_position, 1.0), u_ambient, u_diffuse, u_specular);
+    b_pos = a_position;
+    b_scale = u_mScale;
+    b_rotate = u_mRotate;
+    b_out = mat4(vec4(m_pos, 1.0), v_ambient, v_diffuse, v_specular);
 
     v_texcoord = a_texcoord;
 }

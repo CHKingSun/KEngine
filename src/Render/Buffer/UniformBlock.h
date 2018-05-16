@@ -41,10 +41,9 @@ namespace KEngine {
 				glUniformBlockBinding(program, index, index); //use it index as a binding point.
 				if (index == GL_INVALID_INDEX) {
 					std::cerr << "Wrong uniform block name!" << std::endl;
-				} else {
-					std::cerr << "Uniform block name: " << name << " with index: " << index << std::endl;
-				}
-				shader->uniforms->emplace(name, index);
+				} /*else {
+					std::cout << "Uniform block name: " << name << " with index: " << index << std::endl;
+				}*/
 			}
 			~UnifromBlock() {
 				glDeleteBuffers(1, &ubo);
@@ -62,7 +61,7 @@ namespace KEngine {
 				}
 				Kint uboSize;
 				glGetActiveUniformBlockiv(program, index, GL_UNIFORM_BLOCK_DATA_SIZE, &uboSize);
-				Kuint count = blocks.size();
+				Ksize count = blocks.size();
 
 				const auto names = new const Kchar*[count]; //do not delete it for it not a copy
 				auto indices = new Kuint[count];
@@ -90,8 +89,8 @@ namespace KEngine {
 						sizes[i] * getSize(types[i])));
 					glBufferSubData(GL_UNIFORM_BUFFER, offsets[i],
 						sizes[i] * getSize(types[i]), blocks[i].data);
-					std::cout << names[i] << ": " << offsets[i] << ", "
-						<< sizes[i] << ", " << getSize(types[i]) << std::endl;
+					//std::cout << names[i] << ": " << offsets[i] << ", "
+					//	<< sizes[i] << ", " << getSize(types[i]) << std::endl;
 				}
 				glBindBufferBase(GL_UNIFORM_BUFFER, index, ubo);
 				glBindBuffer(GL_UNIFORM_BUFFER, 0);
@@ -102,7 +101,7 @@ namespace KEngine {
 				delete[] sizes;
 			}
 
-			void reAllocate(const BlockData& data) {
+			void reAllocate(const BlockData& data)const {
 				if (index == GL_INVALID_INDEX) {
 					std::cerr << "Wrong uniform blocks index!" << std::endl;
 					return;
@@ -115,10 +114,14 @@ namespace KEngine {
 					}
 				}
 
+				if (msg == nullptr) return;
+
 				glBindBuffer(GL_UNIFORM_BUFFER, ubo);
 				glBufferSubData(GL_UNIFORM_BUFFER, msg->offset, msg->size, data.data);
 				glBindBufferBase(GL_UNIFORM_BUFFER, index, ubo);
 				glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+				//delete msg; //do not delete msg for it a reference of data in blockMsg.
 
 				// glBindBuffer(GL_UNIFORM_BUFFER, ubo);
 				// Kchar* mapData = (Kchar*)glMapBuffer(GL_UNIFORM_BUFFER, GL_READ_WRITE);

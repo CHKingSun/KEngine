@@ -50,6 +50,7 @@ void main(){
     if(flag[2]) specular *= v_specular;
     else specular = v_specular;
 
-    fragColor = (ambient + diffuse + specular) * vec4(v_texcoord, 0.0f, 1.0f);
+    fragColor = (ambient + diffuse + specular);
+    // fragColor = (ambient + diffuse + specular) * vec4(v_texcoord, 0.0f, 1.0f);
     // fragColor = vec4(v_texcoord, 0.0f, 1.0f);
 }

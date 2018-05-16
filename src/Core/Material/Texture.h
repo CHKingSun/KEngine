@@ -6,6 +6,7 @@
 #define KENGINE_TEXTURE_H
 
 #include <string>
+#include <unordered_map>
 #include <GL/glew.h>
 #include <stb_image.h>
 #include <iostream>
@@ -21,11 +22,12 @@ namespace KEngine {
 		class Texture {
 		private:
 			Kuint id;
-			mutable Kint activeId;
+			mutable Kuint activeId;
 			std::string path;
 			TextureType type;
 
 			static Kint max_num; // = 0;
+			static std::unordered_map<std::string, Kuint> texPaths;
 			const static std::string TEX_HEAD; // = "u_textures[";
 			const static std::string TEX_TEXTURE; // = "].tex";
 			const static std::string TEX_TYPE; // = "].type";
@@ -33,16 +35,21 @@ namespace KEngine {
 
 		public:
 
-			Texture(const std::string &path, TextureType type = DIFFUSE) : path(path),
-				type(type) {
+			Texture(const std::string &path, TextureType type = DIFFUSE):
+				path(path), type(type) {
 				if (max_num == 0) glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &max_num);
 				id = getTextureId(path);
 			}
 			~Texture() {
 				if (glIsTexture(id)) glDeleteTextures(1, &id);
+				//remember that you share you textures with other objects,
+				//so some day when you get wrong with texture, maybe here.
+				texPaths.erase(path);
 			}
 
 			Kuint getTextureId(const std::string &path)const {
+				auto fit = texPaths.find(path);
+				if (fit != texPaths.end()) return fit->second;
 				GLuint tex_id;
 				glGenTextures(1, &tex_id);
 				//OpenGL 4.5 glCreateTextures(target, size, *textures);
@@ -82,10 +89,11 @@ namespace KEngine {
 					std::cerr << "Load texture file: " << path << "failed!" << std::endl;
 					glDeleteTextures(1, &tex_id);
 				}
+				texPaths.emplace(path, tex_id);
 				return tex_id;
 			}
 
-			void bind(const KRenderer::Shader *shader, Kint activeId)const {
+			void bind(const KRenderer::Shader *shader, Kuint activeId)const {
 				if (activeId < 0 || activeId >= max_num) return;
 				this->activeId = activeId;
 
@@ -107,6 +115,7 @@ namespace KEngine {
 		};
 
 		Kint Texture::max_num = 0;
+		std::unordered_map<std::string, Kuint> Texture::texPaths = std::unordered_map<std::string, Kuint>();
 		const std::string Texture::TEX_HEAD("u_textures[");
 		const std::string Texture::TEX_TEXTURE("].texture");
 		const std::string Texture::TEX_TYPE("].type");

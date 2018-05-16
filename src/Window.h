@@ -9,11 +9,11 @@
 #include <GLFW/glfw3.h>
 #include <string>
 #include "./KHeader.h"
-#include "Render/Renderer.h"
+#include "./Core/Vector/Vec2.h"
+#include "./Core/Material/Color.h"
 
 namespace KEngine{
     namespace KWindow{
-        using namespace KRenderer;
 
         class Window{
 			friend void window_size_callback(GLFWwindow* window, int width, int height);
@@ -146,7 +146,7 @@ namespace KEngine{
 				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			}
 
-			void setClearColor(const tcolor& color = tcolor(0.17f, 0.17f, 0.17f, 1.0f)) {
+			void setClearColor(const KMaterial::Color& color = KMaterial::Color(0.17f, 0.17f, 0.17f, 1.0f)) {
 				glClearColor(color.r, color.g, color.b, color.a);
 			}
 
