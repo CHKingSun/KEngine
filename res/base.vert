@@ -91,7 +91,7 @@ uniform SLight u_sLights[MAX_LIGHTS_NUM];
 
 out feedback{
     mat4 b_out;
-    vec3 b_pos;
+    vec4 b_pos;
     vec3 b_scale;
     mat3 b_rotate;
 };
@@ -152,8 +152,8 @@ void main() {
     v_specular = vec4(0.0f);
 
     vec3 m_pos = u_mPos + (u_mRotate * (u_mScale * a_position));
-    gl_Position = vec4(m_pos, 1.0);
-    // gl_Position = u_proj * (u_view * vec4(m_pos, 1.0));
+    // gl_Position = vec4(m_pos, 1.0);
+    gl_Position = u_proj * (u_view * vec4(m_pos, 1.0));
 
     bool flag[2] = bool[2]( false, false ); //if no lights
     if(a_normal == vec3(0.0f)) { //no normals
@@ -210,7 +210,7 @@ void main() {
         // v_specular = u_specular;
     }
 
-    b_pos = a_position;
+    b_pos = gl_Position;
     b_scale = u_mScale;
     b_rotate = u_mRotate;
     b_out = mat4(vec4(m_pos, 1.0), v_ambient, v_diffuse, v_specular);

@@ -47,7 +47,7 @@ namespace KEngine {
 						tex_coord->emplace_back(1.0f, 1.0f);
 						tex_coord->emplace_back(0.0f, 1.0f);
 
-						Kuint t = (i * xslices + j) * 4;
+						Kuint t = (i * yslices + j) * 4;
 						indices->emplace_back(t, t + 1, t + 2);
 						indices->emplace_back(t + 2, t + 3, t);
 					}
@@ -81,7 +81,6 @@ namespace KEngine {
 				indices = new std::vector<Face<Kuint>>();
 				indices->reserve(count * 2);
 				material = new KMaterial::Material();
-				material->addTexture(RES_PATH + "wall_texture.jpg");
 
 				generate(width, height, xslices, yslices);
 				initArray();
@@ -98,6 +97,11 @@ namespace KEngine {
 					delete this->material;
 					this->material = material;
 				}
+			}
+
+			void addTexture(const std::string &path, KMaterial::TextureType type =
+				KMaterial::TextureType::DIFFUSE) {
+				material->addTexture(path, type);
 			}
 
 			void bind()const override {

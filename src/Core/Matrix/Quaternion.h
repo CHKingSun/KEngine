@@ -144,6 +144,10 @@ namespace KEngine{
             friend std::ostream& operator<<(std::ostream &os, const Quaternion &q);
         };
 
+		Quaternion operator-(const Quaternion &q1) {
+			//note: just get its conjugate!
+			return q1.getConjugate();
+		}
         Quaternion operator*(const Quaternion &q1, const Quaternion &q2) {
             return Quaternion(q1)*=q2;
         }

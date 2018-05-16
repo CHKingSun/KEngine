@@ -84,10 +84,10 @@ namespace KEngine{
 
             m[0][0] = static_cast<Kfloat>(2) / (right - left);
             m[1][1] = static_cast<Kfloat>(2) / (top - bottom);
-            m[2][2] = static_cast<Kfloat>(2) / (far - near);
+            m[2][2] = static_cast<Kfloat>(-2) / (far - near);
 
             m[0][3] = -(right + left) / (right - left);
-            m[1][3] = -(top - bottom) / (top - bottom);
+            m[1][3] = -(top + bottom) / (top - bottom);
             m[2][3] = -(far + near) / (far - near);
 
             return m;
@@ -100,7 +100,7 @@ namespace KEngine{
             m[0][0] = static_cast<Kfloat>(2) * near / (right - left);
             m[1][1] = static_cast<Kfloat>(2) * near / (top - bottom);
             m[0][2] = -(right + left) / (right - left);
-            m[1][2] = -(top - bottom) / (top - bottom);
+            m[1][2] = -(top + bottom) / (top - bottom);
 
             m[2][2] = -(far + near) / (far - near);
             m[2][3] = static_cast<Kfloat>(-2) * far * near / (far - near);

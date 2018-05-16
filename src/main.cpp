@@ -169,19 +169,26 @@ void test() {
 
 	auto window = new KEngine::KWindow::Window("KEngine");
 	auto shader = new Shader(RES_PATH + "base.vert", RES_PATH + "base.frag");
-	//auto shader = new Shader(ROOT_PATH + "res/vertex.glsl", ROOT_PATH + "res/fragment.glsl");
 	shader->bind();
 	KObject::Object3D::bindUniform(shader);
 	KMaterial::Material::bindUniform(shader);
-	auto plane = new KEngine::KObject::Plane(1, 1, 3, 3);
-	auto plane1 = new KEngine::KObject::Plane(1, 1, 3, 3);
-	plane1->translate(Vec3(-0.5, 0, 0));
-	plane->translate(Vec3(0.5, 0, 0));
-
-	auto material = new KMaterial::Material(KMaterial::Color(0.0, 0.1, 0.2, 0.6),
+	KCamera::Camera::bindUniform(shader);
+	auto camera = new KCamera::Camera(Vec3(0, 20, 30));
+	camera->setPerspective(45, 1.0, 0.1, 100);
+	camera->rotateView(30, Vec3(-1, 0, 0));
+	camera->bind();
+	auto plane = new KEngine::KObject::Plane(30, 20, 1, 1);
+	plane->setPosition(Vec3(0, 5, -10));
+	auto material = new KMaterial::Material(KMaterial::Color(0.8, 0.6, 0.2, 1.0),
 		KMaterial::Color(0.0, 0.1, 0.2, 0.8));
-	material->addTexture(RES_PATH + "stone.png");
-	plane1->setMaterial(material);
+	material->addTexture(RES_PATH + "wall.jpg");
+	plane->setMaterial(material);
+	auto plane1 = new KEngine::KObject::Plane(30, 20, 3, 2);
+	plane1->addTexture(RES_PATH + "stone.png");
+	plane1->setRotation(-90, Vec3(1, 0, 0));
+	plane1->setPosition(Vec3(0, -5, 0));
+
+	glEnable(GL_DEPTH_TEST);
 
 	//plane->setRenderMode(GL_FRONT_AND_BACK, GL_LINE);
 
@@ -195,7 +202,7 @@ void test() {
 		//"b_rotate"
 		//"b_out"
 	};
-	using OutData = /*KMatrix::Mat4; //*/KVector::Vec3;
+	using OutData = /*KMatrix::Mat4; //*/KVector::Vec4;
 	auto tfbo = new BackBuffer(backShader, varyings, sizeof(OutData) * plane->getCount());
 	backShader->bind();
 	tfbo->bind();
@@ -225,7 +232,9 @@ void test() {
 		++count;
 		window->clear();
 
-		plane->setRotation(window->getRunTime() * 10, Vec3(0, 1, 0));
+		//plane->setRotation(window->getRunTime() * 10, Vec3(0, 1, 0));
+		//camera->rotateCamera(1, Vec3(0, 1, 0));
+		//camera->bind();
 
 		plane->bindTextures(shader);
 		plane->render();

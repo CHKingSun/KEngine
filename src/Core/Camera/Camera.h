@@ -14,6 +14,7 @@
 #include "../Matrix/Quaternion.h"
 #include "../../Render/Buffer/UniformBlock.h"
 
+//一切对镜头的操作都是逆操作
 //会频繁的进行移动
 //需要把位置传入(光照计算)
 //需要频繁的进行整体旋转
@@ -41,14 +42,16 @@ namespace KEngine{
 
 			tmat4 toViewMatrix()const {
 				tmat3 tmp = view.toMat3();
-				return rotate.toMat4() * tmat4(tmp, tmp * -position);
+				return tmat4(tmp, tmp * -position) * (-rotate).toMat4();
 			}
 
         public:
             explicit Camera(const tvec3 &pos = tvec3()): position(pos),
-                     view(tquaternion()), projection(tmat4()), rotate(tquaternion()) {} //ortho
-            Camera(const tvec3 &eye, const tvec3 &center, const tvec3 &up):
-                    projection(tmat4()), rotate(tquaternion()) {
+                     view(tquaternion()), rotate(tquaternion()) {
+				setOrtho(-1, 1, -1, 1, -1, 1);
+			} //ortho
+            Camera(const tvec3 &eye, const tvec3 &center, const tvec3 &up): rotate(tquaternion()) {
+				setOrtho(-1, 1, -1, 1, -1, 1);
                 setView(eye, center, up);
             }
             Camera(const Kfloat &fovy, const Kfloat &aspect,
@@ -76,11 +79,10 @@ namespace KEngine{
 				}
 			}
 
-            Camera& setPosition(const tvec3 &v){
+            void setPosition(const tvec3 &v){
                 position = v;
-                return *this;
             }
-            Camera& setView(const tvec3 &eye, const tvec3 &center, const tvec3 &up){
+            void setView(const tvec3 &eye, const tvec3 &center, const tvec3 &up){
                 //u-v-n is left-hand coordinate
                 const tvec3 n((center - eye).normalize());
                 const tvec3 u(tvec3::cross(n, up).normalize());
@@ -88,24 +90,20 @@ namespace KEngine{
 
                 position = eye;
                 view = tquaternion().fromMatrix(tmat3(u, v, -n));
-                return *this;
             }
-            Camera& setPerspective(const Kfloat &fovy, const Kfloat &aspect,
-                                   const Kfloat &zNear, const Kfloat &zFar){
+            void setPerspective(const Kfloat &fovy, const Kfloat &aspect,
+				                const Kfloat &zNear, const Kfloat &zFar){
                 projection = KFunction::perspective(fovy, aspect, zNear, zFar);
 //                zdepth = tvec2(zNear, zFar);
-                return *this;
 
             }
-            Camera& setOrtho(const Kfloat &left, const Kfloat &right, const Kfloat &bottom,
-                             const Kfloat &top, const Kfloat &near, const Kfloat &far){
+            void setOrtho(const Kfloat &left, const Kfloat &right, const Kfloat &bottom,
+				          const Kfloat &top, const Kfloat &near, const Kfloat &far){
                 projection = KFunction::ortho(left, right, bottom, top, near, far);
-                return *this;
             }
-            Camera& setFrustum(const Kfloat &left, const Kfloat &right, const Kfloat &bottom,
+            void setFrustum(const Kfloat &left, const Kfloat &right, const Kfloat &bottom,
                                const Kfloat &top, const Kfloat &near, const Kfloat &far){
                 projection = KFunction::frustum(left, right, bottom, top, near, far);
-                return *this;
             }
 
             void rotateCamera(const Kfloat &angle, const tvec3 &v){
