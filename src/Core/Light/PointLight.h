@@ -49,6 +49,26 @@ namespace KEngine{
                     diffuse(diffuse), specular(specular),
                     shadowFactor(shadowFactor), kc(kc), kl(kl), kq(kq){}
 
+			void bind(const KRenderer::Shader* shader, Kuint id = 0XFFFFFFFF)const override {
+				if (id < MAX_LIGHTS_NUM) activeId = id;
+
+				const std::string index = std::to_string(activeId);
+				shader->bindUniform1i(PLIGHT + index + U_ENABLE, enable);
+				shader->bindUniform1f(PLIGHT + index + U_FACTOR, factor);
+				shader->bindUniform1f(PLIGHT + index + U_SHADOWFACTOR, shadowFactor);
+				shader->bindUniform3f(PLIGHT + index + U_POSITION, position);
+				shader->bindUniform4f(PLIGHT + index + U_AMBIENT, ambient);
+				shader->bindUniform4f(PLIGHT + index + U_DIFFUSE, diffuse);
+				shader->bindUniform4f(PLIGHT + index + U_SPECULAR, specular);
+				shader->bindUniform1f(PLIGHT + index + U_KC, kc);
+				shader->bindUniform1f(PLIGHT + index + U_KL, kl);
+				shader->bindUniform1f(PLIGHT + index + U_KQ, kq);
+			}
+
+			void bindPosition(const KRenderer::Shader* shader)const override {
+				shader->bindUniform3f(PLIGHT + std::to_string(activeId) + U_POSITION, position);
+			}
+
             void translate(const tvec3 &v){
                 position += v;
             }

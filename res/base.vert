@@ -1,7 +1,6 @@
 #version 330 core
 
 struct ALight{ //Ambient light
-    int type;
     bool enable;
 
     float factor;
@@ -10,12 +9,12 @@ struct ALight{ //Ambient light
 };
 
 struct DLight{ //Direction light
-    int type;
     bool enable;
-    vec3 direction;
 
     float factor;
     float shadowFactor;
+
+    vec3 direction;
 
     vec4 ambient;
     vec4 diffuse;
@@ -23,12 +22,12 @@ struct DLight{ //Direction light
 };
 
 struct PLight{ //Point Light
-    int type;
     bool enable;
-    vec3 position;
 
     float factor;
     float shadowFactor;
+
+    vec3 position;
 
     vec4 ambient;
     vec4 diffuse;
@@ -38,13 +37,13 @@ struct PLight{ //Point Light
 };
 
 struct SLight{ //Spot Light
-    int type;
     bool enable;
-    vec3 position;
-    vec3 direction;
 
     float factor;
     float shadowFactor;
+
+    vec3 position;
+    vec3 direction;
 
     vec4 ambient;
     vec4 diffuse;
@@ -91,7 +90,7 @@ uniform SLight u_sLights[MAX_LIGHTS_NUM];
 
 out feedback{
     mat4 b_out;
-    vec4 b_pos;
+    vec3 b_pos;
     vec3 b_scale;
     mat3 b_rotate;
 };
@@ -104,17 +103,18 @@ out color{
 out vec2 v_texcoord;
 
 void calALight(ALight l) {
-    v_ambient += l.ambient;
+    v_ambient += l.ambient * l.factor;
 }
 
 void calDLight(DLight l, vec3 N, vec3 E) { //N and E are normalized;
     vec3 L = normalize(-l.direction);
     float cosT = max(dot(L, N), 0.0);
-    float cosA = max(dot(E, reflect(-L, N)), 0.0);
+    float cosA = 0.0;
+    if(cosT != 0.0) cosA = max(dot(E, reflect(-L, N)), 0.0);
 
-    v_ambient += l.ambient;
-    v_diffuse += l.diffuse * cosT;
-    v_specular += l.specular * pow(cosA, u_shininess);
+    v_ambient += l.ambient * l.factor;
+    v_diffuse += l.diffuse * cosT * l.factor;
+    v_specular += l.specular * pow(cosA, u_shininess) * l.factor;
 }
 
 void calPLight(PLight l, vec3 N, vec3 E, vec3 m_pos) {
@@ -123,8 +123,10 @@ void calPLight(PLight l, vec3 N, vec3 E, vec3 m_pos) {
     float attenuation = 1.0 / (l.kc + dis * l.kl + dis * dis * l.kq);
     vec3 L = normalize(l_dir);
     float cosT = max(dot(L, N), 0.0);
-    float cosA = max(dot(E, reflect(-L, N)), 0.0);
+    float cosA = 0.0;
+    if(cosT != 0.0) cosA = max(dot(E, reflect(-L, N)), 0.0);
 
+    attenuation *= l.factor;
     v_ambient += l.ambient * attenuation;
     v_diffuse += l.diffuse * cosT * attenuation;
     v_specular += l.specular * pow(cosA, u_shininess) * attenuation;
@@ -132,18 +134,20 @@ void calPLight(PLight l, vec3 N, vec3 E, vec3 m_pos) {
 
 void calSLight(SLight l, vec3 N, vec3 E, vec3 m_pos) {
     vec3 l_dir = l.position - m_pos;
-    float intensity = smoothstep(dot(l.direction, l_dir), l.outerCutOff, l.innerCutOff);
-    if(intensity == 0.0) return;
-
     float dis = length(l_dir);
-    float attenuation = 1.0 / (l.kc + dis * l.kl + dis * dis * l.kq);
-    vec3 L = normalize(l_dir);
-    float cosT = max(dot(L, N), 0.0);
-    float cosA = max(dot(E, reflect(-L, N)), 0.0);
 
+    vec3 L = normalize(l_dir);
+    float intensity = smoothstep(l.outerCutOff, l.innerCutOff, dot(l.direction, -L));
+    if(intensity == 0) return;
+    float attenuation = 1.0 / (l.kc + dis * l.kl + dis * dis * l.kq);
+    float cosT = max(dot(L, N), 0.0);
+    float cosA = 0.0;
+    if(cosT != 0.0) cosA = max(dot(E, reflect(-L, N)), 0.0);
+
+    attenuation *= l.factor * intensity;
     v_ambient += l.ambient * attenuation;
-    v_diffuse += l.diffuse * cosT * attenuation * intensity;
-    v_specular += l.specular * pow(cosA, u_shininess) * attenuation * intensity;
+    v_diffuse += l.diffuse * cosT * attenuation;
+    v_specular += l.specular * pow(cosA, u_shininess) * attenuation;
 }
 
 void main() {
@@ -174,27 +178,27 @@ void main() {
             }
             if(u_dLights[i].enable) {
                 flag[1] = true;
-                flag[0] = true;
+                // flag[0] = true;
                 calDLight(u_dLights[i], N, E);
             }
             if(u_pLights[i].enable) {
                 flag[1] = true;
-                flag[0] = true;
+                // flag[0] = true;
                 calPLight(u_pLights[i], N, E, m_pos);
             }
             if(u_sLights[i].enable) {
                 flag[1] = true;
-                flag[0] = true;
+                // flag[0] = true;
                 calSLight(u_sLights[i], N, E, m_pos);
             }
         }
     }
 
-    vec4 minVal = vec4(0.0, 0.0, 0.0, 1.0);
+    vec4 minVal = vec4(0.0, 0.0, 0.0, 0.0);
     vec4 maxVal = vec4(1.0, 1.0, 1.0, 1.0);
     v_ambient = clamp(v_ambient, minVal, maxVal);
-    v_ambient = clamp(v_diffuse, minVal, maxVal);
-    v_ambient = clamp(v_specular, minVal, maxVal);
+    v_diffuse = clamp(v_diffuse, minVal, maxVal);
+    v_specular = clamp(v_specular, minVal, maxVal);
 
     if(flag[1]) {
         v_ambient *= u_ambient;
@@ -202,18 +206,20 @@ void main() {
         v_specular *= u_specular;
     } else if(flag[0]) {
         v_ambient *= u_ambient;
-        v_diffuse = u_diffuse;
-        v_specular = u_specular;
+        // v_diffuse = u_diffuse;
+        // v_specular = u_specular;
     } else {
-        // v_ambient = u_ambient;
-        v_diffuse = u_diffuse;
+        v_ambient = u_ambient;
+        // v_diffuse = u_diffuse;
         // v_specular = u_specular;
     }
 
-    b_pos = gl_Position;
+    b_pos = a_normal;
     b_scale = u_mScale;
     b_rotate = u_mRotate;
-    b_out = mat4(vec4(m_pos, 1.0), v_ambient, v_diffuse, v_specular);
+    b_out = mat4(vec4(u_sLights[0].direction, u_sLights[0].outerCutOff),
+                vec4(u_sLights[0].position, u_sLights[0].innerCutOff),
+                vec4(m_pos, 1.0), vec4(a_normal, 0.0));
 
     v_texcoord = a_texcoord;
 }

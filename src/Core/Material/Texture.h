@@ -35,7 +35,7 @@ namespace KEngine {
 
 		public:
 
-			Texture(const std::string &path, TextureType type = DIFFUSE):
+			Texture(const std::string &path, TextureType type = AMBIENT):
 				path(path), type(type) {
 				if (max_num == 0) glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &max_num);
 				id = getTextureId(path);
@@ -101,16 +101,15 @@ namespace KEngine {
 				return tex_id;
 			}
 
-			void bind(const KRenderer::Shader *shader, Kuint activeId)const {
-				if (activeId < 0 || activeId >= max_num) return;
-				this->activeId = activeId;
+			void bind(const KRenderer::Shader *shader, Kuint activeId = 0XFFFFFFFF)const {
+				if (activeId < max_num) this->activeId = activeId;
 
 				glBindTexture(GL_TEXTURE_2D, id);
-				glActiveTexture(GL_TEXTURE0 + activeId);
+				//glActiveTexture(GL_TEXTURE0 + activeId);
 				const std::string index = std::to_string(activeId);
-				shader->bindUniform1i(std::string(TEX_HEAD + index + TEX_TEXTURE), GL_TEXTURE0 + activeId);
-				shader->bindUniform1i(std::string(TEX_HEAD + index + TEX_TYPE), type);
-				shader->bindUniform1i(std::string(TEX_HEAD + index + TEX_ENABLE), 1);
+				shader->bindUniform1i(TEX_HEAD + index + TEX_TEXTURE, GL_TEXTURE0 + activeId);
+				shader->bindUniform1i(TEX_HEAD + index + TEX_TYPE, type);
+				shader->bindUniform1i(TEX_HEAD + index + TEX_ENABLE, 1);
 			}
 
 			void active(const KRenderer::Shader *shader) {
@@ -125,7 +124,7 @@ namespace KEngine {
 		Kint Texture::max_num = 0;
 		std::unordered_map<std::string, Kuint> Texture::texPaths = std::unordered_map<std::string, Kuint>();
 		const std::string Texture::TEX_HEAD("u_textures[");
-		const std::string Texture::TEX_TEXTURE("].texture");
+		const std::string Texture::TEX_TEXTURE("].tex");
 		const std::string Texture::TEX_TYPE("].type");
 		const std::string Texture::TEX_ENABLE("].enable");
 	}

@@ -65,7 +65,7 @@ namespace KEngine {
 				vao = new KBuffer::VertexArray();
 				vao->allocate(new KBuffer::VertexBuffer(vertices->data(), sizeof(tvec2) * count * 4), A_POSITION, 2, GL_FLOAT);
 				vao->allocate(new KBuffer::VertexBuffer(tex_coord->data(), sizeof(tvec2) * count * 4), A_TEXCOORD, 2, GL_FLOAT);
-				vao->setVertexAttrib3f(A_NORMAL, tvec3(0.0f, 1.0f, 0.0f));
+				vao->setVertexAttrib3f(A_NORMAL, tvec3(0.0f, 0.0f, 1.0f));
 				ibo = new KBuffer::VertexBuffer(indices->data(), sizeof(Kuint) * count * 6, KBuffer::BufferType::INDEX);
 			}
 
@@ -100,7 +100,7 @@ namespace KEngine {
 			}
 
 			void addTexture(const std::string &path, KMaterial::TextureType type =
-				KMaterial::TextureType::DIFFUSE) {
+				KMaterial::TextureType::AMBIENT) {
 				material->addTexture(path, type);
 			}
 

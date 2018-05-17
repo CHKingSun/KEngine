@@ -30,11 +30,11 @@ namespace KEngine{
 
 			static std::shared_ptr<KBuffer::UnifromBlock> block;
 
-			const static std::string MATERIAL;
-			const static std::string AMBIENT;
-			const static std::string DIFFUSE;
-			const static std::string SPECULAR;
-			const static std::string SHININESS;
+			const static std::string MATERIAL; //material block name
+			const static std::string AMBIENT; //u_ambient
+			const static std::string DIFFUSE; //u_diffuse
+			const static std::string SPECULAR; //u_specular
+			const static std::string SHININESS; //u_shininess
 
         public:
 
@@ -56,7 +56,7 @@ namespace KEngine{
                 delete textures;
                 textures = tex;
             }
-            void addTexture(const std::string &path, TextureType type = TextureType::DIFFUSE) {
+            void addTexture(const std::string &path, TextureType type = TextureType::AMBIENT) {
                 if(textures == nullptr) textures = new std::vector<Texture*>();
                 textures->emplace_back(new Texture(path, type));
             }
@@ -83,7 +83,9 @@ namespace KEngine{
 				if (textures != nullptr) {
 					int i = 0;
 					for (auto &it : *textures) {
-						it->bind(shader, i++); //note: use ++i maybe you will got some different answer.
+						it->bind(shader, i++); 
+						//note: use ++i maybe you will got some different answer.
+						//Maybe it's related to glActiveTexture();
 					}
 				}
 			}

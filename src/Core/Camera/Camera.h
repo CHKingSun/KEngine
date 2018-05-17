@@ -35,10 +35,10 @@ namespace KEngine{
 
 			static std::shared_ptr<KBuffer::UnifromBlock> block;
 
-			const static std::string PROJECTION;
-			const static std::string EYE;
-			const static std::string VIEW;
-			const static std::string PROJ;
+			const static std::string PROJECTION; //porjection block name
+			const static std::string EYE; //p_eye
+			const static std::string VIEW; //u_view
+			const static std::string PROJ; //u_proj
 
 			tmat4 toViewMatrix()const {
 				tmat3 tmp = view.toMat3();

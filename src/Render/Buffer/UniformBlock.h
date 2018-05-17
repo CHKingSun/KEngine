@@ -51,6 +51,7 @@ namespace KEngine {
 			}
 			~UnifromBlock() {
 				glDeleteBuffers(1, &ubo);
+				if (blockMsgs == nullptr) return;
 				for (auto &it : *blockMsgs) {
 					delete it;
 					it = nullptr;

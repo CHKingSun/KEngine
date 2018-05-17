@@ -35,14 +35,14 @@ namespace KEngine {
 
 			static std::shared_ptr<KBuffer::UnifromBlock> block;
 
-			const static std::string MODEL;
-			const static std::string U_POSITION;
-			const static std::string U_ROTATION;
-			const static std::string U_SCALE;
+			const static std::string MODEL; //model block name
+			const static std::string U_POSITION; //u_mPos
+			const static std::string U_ROTATION; //u_mRotate
+			const static std::string U_SCALE; //u_mScale
 
-			const static Kint A_POSITION; // = 1;
-			const static Kint A_NORMAL; // = 2;
-			const static Kint A_TEXCOORD; // = 3;
+			const static Kint A_POSITION; // = 1; a_position
+			const static Kint A_NORMAL; // = 2; a_normal
+			const static Kint A_TEXCOORD; // = 3; a_texcoord
 
 		protected:
 			Object3D(std::string type) : type(type), vao(nullptr), ibo(nullptr),

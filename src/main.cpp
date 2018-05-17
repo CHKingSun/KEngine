@@ -10,7 +10,11 @@
 #include "./Window.h"
 #include "./Object/Plane.h"
 #include "./Render/Shader.h"
-#include "./Controller/CameraController.h"
+#include "./Core/Camera/Camera.h"
+#include "./Core/Light/Light.h"
+#include "./Core/Light/DirectionLight.h"
+#include "./Core/Light/PointLight.h"
+#include "./Core/Light/SpotLight.h"
 #include "./Render/Buffer/BackBuffer.h"
 
 //#define TEST
@@ -166,25 +170,43 @@ void test() {
 	using namespace KEngine::KBuffer;
 	using namespace KEngine::KRenderer;
 	using namespace KEngine::KVector;
+	using namespace KEngine::KLight;
+
+	std::cout << Vec3(0, 0, -1).dot(Vec3(0, -5, -5)) << std::endl;
 
 	auto window = new KEngine::KWindow::Window("KEngine");
 	auto shader = new Shader(RES_PATH + "base.vert", RES_PATH + "base.frag");
+
+	auto camera = new KCamera::Camera(Vec3(0, 20, 30));
+
+	auto light = new PointLight(Vec3(0, 0, -5));
+	auto light1 = new SpotLight(Vec3(0, 6, 10), Vec3(0, 0, -1));
+
+	auto plane = new KEngine::KObject::Plane(30, 20, 30, 20);
+	auto plane1 = new KEngine::KObject::Plane(30, 20, 30, 20);
+
 	shader->bind();
 	KObject::Object3D::bindUniform(shader);
 	KMaterial::Material::bindUniform(shader);
 	KCamera::Camera::bindUniform(shader);
-	auto camera = new KCamera::Camera(Vec3(0, 20, 30));
+
 	camera->setPerspective(45, 1.0, 0.1, 100);
 	camera->rotateView(30, Vec3(-1, 0, 0));
-	camera->bind();
-	auto plane = new KEngine::KObject::Plane(30, 20, 1, 1);
+
+	//auto camera2 = new KCamera::Camera(Vec3(0, 20, -30));
+	//camera2->setPerspective(45, 1.0, 0.1, 100);
+	//camera2->rotateView(180, Vec3(0, 1, 0));
+	//camera2->rotateView(30, Vec3(1, 0, 0));
+
+	Kboolean flag = false;
+
 	plane->setPosition(Vec3(0, 5, -10));
-	auto material = new KMaterial::Material(KMaterial::Color(0.8, 0.6, 0.2, 1.0),
-		KMaterial::Color(0.0, 0.1, 0.2, 0.8));
-	material->addTexture(RES_PATH + "wall.jpg");
+	auto material = new KMaterial::Material(KMaterial::Color(0.4, 0.4, 0.4, 1.0));
+	//material->addTexture(RES_PATH + "floor.jpg");
 	plane->setMaterial(material);
-	auto plane1 = new KEngine::KObject::Plane(30, 20, 3, 2);
-	plane1->addTexture(RES_PATH + "stone.png");
+
+	//plane1->addTexture(RES_PATH + "stone.png", KMaterial::TextureType::DIFFUSE);
+	//plane1->addTexture(RES_PATH + "stone.png");
 	plane1->setRotation(-90, Vec3(1, 0, 0));
 	plane1->setPosition(Vec3(0, -5, 0));
 
@@ -196,21 +218,29 @@ void test() {
 	glEnable(GL_RASTERIZER_DISCARD);
 	auto backShader = new KRenderer::Shader();
 	backShader->addShader(GL_VERTEX_SHADER, ROOT_PATH + "res/base.vert");
+	backShader->bind();
+	KObject::Object3D::bindUniform(backShader);
+	KMaterial::Material::bindUniform(backShader);
+	KCamera::Camera::bindUniform(backShader);
+	camera->bind();
+	light->bind(backShader, 0);
+	light1->bind(backShader, 0);
+	light1->bind(shader, 0);
+
 	std::vector<std::string> varyings = {
-		"b_pos"
+		//"b_pos",
 		//"b_scale",
 		//"b_rotate"
-		//"b_out"
+		"b_out"
 	};
-	using OutData = /*KMatrix::Mat4; //*/KVector::Vec4;
-	auto tfbo = new BackBuffer(backShader, varyings, sizeof(OutData) * plane->getCount());
-	backShader->bind();
+	//using OutData = KVector::Vec3;
+	using OutData = KMatrix::Mat4;
+	auto tfbo = new BackBuffer(backShader, varyings, sizeof(OutData) * plane1->getCount());
 	tfbo->bind();
 	glCall(;);
 
-	plane->bind();
 	tfbo->enable(GL_TRIANGLES);
-	plane->render();
+	plane1->render();
 	tfbo->disable();
 
 	const auto data = tfbo->getData<OutData>();
@@ -222,8 +252,15 @@ void test() {
 	delete tfbo;
 	delete backShader;
 	shader->bind();
+	KObject::Object3D::bindUniform(shader);
+	KMaterial::Material::bindUniform(shader);
+	KCamera::Camera::bindUniform(shader);
 	glDisable(GL_RASTERIZER_DISCARD);
 #endif // FEEDBACK
+
+	camera->bind();
+	light->bind(shader, 0);
+	light1->bind(shader, 0);
 
 	Kdouble now = window->getRunTime();
 	Ksize count = 0;
@@ -233,8 +270,12 @@ void test() {
 		window->clear();
 
 		//plane->setRotation(window->getRunTime() * 10, Vec3(0, 1, 0));
-		//camera->rotateCamera(1, Vec3(0, 1, 0));
-		//camera->bind();
+
+// 		camera->rotateCamera(1, Vec3(0, 1, 0));
+// 		camera->bind();
+
+		light1->rotate(1, Vec3(1, 0, 0));
+		light1->bindDirection(shader);
 
 		plane->bindTextures(shader);
 		plane->render();
@@ -246,6 +287,9 @@ void test() {
 			std::cout << count << "fps" << std::endl;
 			count = 0;
 			now = window->getRunTime();
+			//if (flag) light1->active(shader);
+			//else light1->unActive(shader);
+			//flag = !flag;
 		}
 	}
 

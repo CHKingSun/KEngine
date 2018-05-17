@@ -90,6 +90,7 @@ namespace KEngine{
                 if(it == uniforms->end()){
 					Kint loc = glGetUniformLocation(program, name.c_str());
 					uniforms->emplace(name, loc);
+					if (loc == -1) std::cerr << "Wrong unifrom name: " << name << std::endl;
 					return loc;
                 }
 				return it->second;

@@ -30,7 +30,7 @@ namespace KEngine{
                 n_lights = 0;
                 lights = nullptr;
                 defaultLight = new Light();
-                defaultLight->id = nextId++;
+                defaultLight->activeId = nextId++;
             }
             ~LightController(){
                 deleteAllLight();
@@ -72,7 +72,7 @@ namespace KEngine{
             }
             Kboolean setDefaultLight(Light *light){
                 if(light == nullptr) return false;
-                light->id = 0;
+                light->activeId = 0;
                 light->enable = defaultLight->enable;
                 delete(defaultLight);
                 defaultLight = light;
@@ -84,7 +84,7 @@ namespace KEngine{
 					lights = new std::vector<Light*>();
 					lights->reserve(MAX_LIGHTS);
 				}
-                light->id = nextId;
+                light->activeId = nextId;
                 //Maybe later will use for vectors to save each type lights;
                 //switch
                 lights->emplace_back(light);

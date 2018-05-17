@@ -1,7 +1,6 @@
 #version 330 core
 
-struct Texture
-{
+struct Texture {
     sampler2D tex;
     int type;
     bool enable;
@@ -9,7 +8,7 @@ struct Texture
 
 const int MAX_TEXTURE_NUM = 12;
 
-in color{
+in color {
     vec4 v_ambient;
     vec4 v_diffuse;
     vec4 v_specular;
@@ -20,7 +19,7 @@ uniform Texture u_textures[MAX_TEXTURE_NUM];
 
 out vec4 fragColor;
 
-void main(){
+void main() {
     vec4 ambient = vec4(0.0f);
     vec4 diffuse = vec4(0.0f);
     vec4 specular = vec4(0.0f);
