@@ -27,7 +27,7 @@ namespace KEngine{
         private:
             Kdouble run_time, pause_time;
             Kuint width, height;
-			Kdouble mx, my;
+			KVector::Vec2 mouse_pos;
 			std::string title;
             Kboolean keys[512]; //-1, 32-162, 256-248
 			Kboolean mouse[3]; //left, right, wheel
@@ -59,6 +59,19 @@ namespace KEngine{
 
 				glClearColor(0.17f, 0.17f, 0.17f, 1.0f);
 
+#if IMGUI_ENABLE
+				// Setup ImGui binding
+				ImGui::CreateContext();
+				//ImGuiIO& io = ImGui::GetIO(); (void)io;
+				//io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
+				//io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;   // Enable Gamepad Controls
+				ImGui_ImplGlfwGL3_Init(window, true);
+
+				// Setup style
+				ImGui::StyleColorsDark();
+				//ImGui::StyleColorsClassic();
+#endif
+
 				std::cout << "Version: " << glGetString(GL_VERSION) << std::endl;
 
                 return true;
@@ -72,7 +85,9 @@ namespace KEngine{
 				glfwSetCursorPosCallback(window, cursor_position_callback);
 				glfwSetCursorEnterCallback(window, cursor_enter_callback);
 
+				Kdouble mx, my;
 				glfwGetCursorPos(window, &mx, &my);
+				mouse_pos.x = mx, mouse_pos.y = my;
 				glfwSwapInterval(1);
 				//glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED); //hide the mouse pointer
 				is_active = true;
@@ -83,7 +98,7 @@ namespace KEngine{
 			void resize(Kint w, Kint h) {
 				width = w;
 				height = h;
-				std::cout << "Window resized with " << w << ", " << h << std::endl;
+				//std::cout << "Window resized with " << w << ", " << h << std::endl;
 				glViewport(0, 0, width, height);
 			}
 
@@ -96,22 +111,20 @@ namespace KEngine{
 				mouse[button] = action == GLFW_PRESS;
 				if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
 					is_active = !is_active;
-					std::cout << "Pointer at: " << mx << ", " << my << std::endl;
-					std::cout << "Run times: " << run_time << std::endl;
-					std::cout << "Pause times: " << pause_time << std::endl;
+					//std::cout << "Pointer at: " << mx << ", " << my << std::endl;
+					//std::cout << "Run times: " << run_time << std::endl;
+					//std::cout << "Pause times: " << pause_time << std::endl;
 				}
 			}
 
 			void mouseWheelEvent(Kdouble yoffset) {
-				if(is_focus) std::cout << "Yaxis scroll: " << yoffset << std::endl;
+				//if(is_focus) std::cout << "Yaxis scroll: " << yoffset << std::endl;
 			}
 
 			void cursorEvent(Kdouble xpos, Kdouble ypos) {
-				if (is_focus) {
-					mx = xpos; my = ypos;
-					if(mouse[GLFW_MOUSE_BUTTON_LEFT]) 
-						std::cout << "Pointer at: " << mx << ", " << my << std::endl;
-				}
+				mouse_pos.x = xpos; mouse_pos.y = ypos;
+				//if(mouse[GLFW_MOUSE_BUTTON_LEFT]) 
+				//	std::cout << "Pointer at: " << mx << ", " << my << std::endl;
 			}
 
 			void focusEvent(bool focused) {
@@ -134,6 +147,10 @@ namespace KEngine{
 				initAction();
             }
             ~Window(){
+#if IMGUI_ENABLE
+				ImGui_ImplGlfwGL3_Shutdown();
+				ImGui::DestroyContext();
+#endif
                 glfwDestroyWindow(window);
                 glfwTerminate();
             }
@@ -143,7 +160,7 @@ namespace KEngine{
 			}
 
 			void clear() {
-				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+				glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 			}
 
 			void setClearColor(const KMaterial::Color& color = KMaterial::Color(0.17f, 0.17f, 0.17f, 1.0f)) {
@@ -169,12 +186,18 @@ namespace KEngine{
 				return run_time;
 			}
 
-			inline KVector::Vec2 getMouse()const {
-				return KVector::Vec2(mx, my);
+			inline const KVector::Vec2& getMouse()const {
+				return mouse_pos;
 			}
 
 			inline KVector::Vec2 getWindowSize()const {
 				return KVector::Vec2(width, height);
+			}
+
+			inline Kboolean getKeyStatus(Kuint key)const {
+				if (key >= 512) return 0;
+				if (key >= 'a' && key <= 'z') key -= 26;
+				return keys[key];
 			}
         };
 

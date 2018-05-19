@@ -107,7 +107,7 @@ namespace KEngine {
 				glBindTexture(GL_TEXTURE_2D, id);
 				//glActiveTexture(GL_TEXTURE0 + activeId);
 				const std::string index = std::to_string(activeId);
-				shader->bindUniform1i(TEX_HEAD + index + TEX_TEXTURE, GL_TEXTURE0 + activeId);
+				shader->bindUniform1i(TEX_HEAD + index + TEX_TEXTURE, activeId);
 				shader->bindUniform1i(TEX_HEAD + index + TEX_TYPE, type);
 				shader->bindUniform1i(TEX_HEAD + index + TEX_ENABLE, 1);
 			}

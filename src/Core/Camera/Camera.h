@@ -21,6 +21,10 @@
 
 namespace KEngine{
     namespace KCamera{
+		enum DirectionType {
+			RIGHT = GLFW_KEY_RIGHT, LEFT = GLFW_KEY_LEFT, BACK = GLFW_KEY_DOWN, FORWARD = GLFW_KEY_UP
+		};
+
         class Camera{
 			using tvec3 = KVector::Vec3;
             using tmat3 = KMatrix::Mat3;
@@ -82,6 +86,9 @@ namespace KEngine{
             void setPosition(const tvec3 &v){
                 position = v;
             }
+			void setRotation(const Kfloat& angle, const tvec3& axis) {
+				rotate = tquaternion(angle, axis);
+			}
             void setView(const tvec3 &eye, const tvec3 &center, const tvec3 &up){
                 //u-v-n is left-hand coordinate
                 const tvec3 n((center - eye).normalize());
@@ -120,6 +127,23 @@ namespace KEngine{
             void translate(const tvec3 &v){
                 position += v;
             }
+
+			tvec3 getDirection(DirectionType type = FORWARD)const {
+				switch (type)
+				{
+				case KEngine::KCamera::FORWARD:
+					return ((rotate * view) * tvec3(0, 0, -1)).normalize();
+				case KEngine::KCamera::BACK:
+					return ((rotate * view) * tvec3(0, 0, 1)).normalize();
+				case KEngine::KCamera::LEFT:
+					return ((rotate * view) * tvec3(-1, 0, 0)).normalize();
+				case KEngine::KCamera::RIGHT:
+					return ((rotate * view) * tvec3(1, 0, 0)).normalize();
+				default:
+					break;
+				}
+				return ((rotate * view) * tvec3(0, 0, -1)).normalize();
+			}
         };
 
 		const std::string Camera::PROJECTION("projection");

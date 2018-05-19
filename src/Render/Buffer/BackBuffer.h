@@ -67,6 +67,8 @@ namespace KEngine {
 				glLinkProgram(program);
 			}
 
+			//TODO delete transform feedback buffer.
+
 			void bind() {
 				int index = 0;
 				for (auto &it : buffers) {

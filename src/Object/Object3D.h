@@ -19,6 +19,7 @@
 #include "../Render/Buffer/UniformBlock.h"
 
 //Maybe later we beed a AABB box or Sphere box and then we need it center
+//Maybe need parent Object3D
 
 namespace KEngine {
 	namespace KObject {
@@ -43,6 +44,7 @@ namespace KEngine {
 			const static Kint A_POSITION; // = 1; a_position
 			const static Kint A_NORMAL; // = 2; a_normal
 			const static Kint A_TEXCOORD; // = 3; a_texcoord
+			const static Kint A_MATRIX; // = 4; a_matrix
 
 		protected:
 			Object3D(std::string type) : type(type), vao(nullptr), ibo(nullptr),
@@ -121,7 +123,7 @@ namespace KEngine {
 
 			virtual Ksize getCount()const = 0;
 			virtual GLenum getComponent()const = 0;
-			virtual void render()const = 0;
+			virtual void render(const KRenderer::Shader* shader = nullptr)const = 0;
 		};
 
 		const std::string Object3D::MODEL("model");
@@ -132,6 +134,7 @@ namespace KEngine {
 		const Kint Object3D::A_POSITION = 1;
 		const Kint Object3D::A_NORMAL = 2;
 		const Kint Object3D::A_TEXCOORD = 3;
+		const Kint Object3D::A_MATRIX = 4;
 
 		std::shared_ptr<KBuffer::UnifromBlock> Object3D::block(nullptr);
 	}

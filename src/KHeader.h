@@ -7,6 +7,13 @@
 
 #include <cmath>
 
+#define IMGUI_ENABLE 1
+#if IMGUI_ENABLE
+//ImGUI header you should put all imgui file into project for some file need to compile
+#include <imgui.h>
+#include <imgui_impl_glfw_gl3.h>
+#endif
+
 #define EPSILON_E6 1E-6
 #define PI 3.1415926535
 #ifdef KNAN
@@ -25,7 +32,9 @@ namespace KEngine{
     using Ksize = unsigned int;
 	using Kushort = unsigned short;
     using Kchar = char;
-    using Kuchar = unsigned char;
+	using Kuchar = unsigned char;
+	using Kbyte = unsigned char;
+	using Kubyte = unsigned char;
     using Kboolean = bool;
 
     namespace KFunction{
@@ -111,6 +120,7 @@ namespace KEngine{
 		template <typename> class Face;
 		class Object3D;
 		class Plane;
+		class Maze;
 	}
 
     namespace KWindow{

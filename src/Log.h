@@ -15,8 +15,8 @@ void glClearError() { while (glGetError() != GL_NO_ERROR); } //抛弃当前所有错误;
 bool glCheckError(const char* fun, const char* file, int line) {
 	GLenum error;
 	if ((error = glGetError()) != GL_NO_ERROR) {
-		std::cerr << "OpenGL error at: " << fun << " in file: " << file << " at line: " << line << std::endl;
-		std::cerr << std::setbase(16) << error << std::endl;
+		std::cerr << "OpenGL error at: " << fun << " in file: " << file << " at line: " << std::setbase(10) <<
+			line << " with error code: 0x0" << std::setbase(16) << error << std::endl;
 		return false;
 	}
 	return true;

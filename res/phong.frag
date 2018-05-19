@@ -1,5 +1,13 @@
 #version 330 core
 
+struct Texture {
+    sampler2D tex;
+    int type;
+    bool enable;
+};
+
+const int MAX_TEXTURE_NUM = 12;
+
 struct ALight{ //Ambient light
     bool enable;
 
@@ -55,23 +63,9 @@ struct SLight{ //Spot Light
 
 const int MAX_LIGHTS_NUM = 4;
 
-//in blocks is not allowed in vertex shader
-layout(location = 1) in vec3 a_position;
-layout(location = 2) in vec3 a_normal;
-layout(location = 3) in vec2 a_texcoord;
-layout(location = 4) in mat4 a_matrix; //multiple render, it will use 4 locations to save, must be column major.
-
-uniform bool u_is_multiple;
-
-//uniform blocks has no location but has binding
-//but binding requires #version 420
-layout(std140, row_major) uniform model{
-    vec3 u_mPos;
-    vec3 u_mScale;
-    mat3 u_mRotate;
-    //model_view * vec4(position, 1.0) = u_mPos + (u_mRotate * (u_mScale * position));
-    //u_NMatrix * normal = u_mRotate * (u_mScale * normal);
-};
+vec4 v_ambient = vec4(0.0f);
+vec4 v_diffuse = vec4(0.0f);
+vec4 v_specular = vec4(0.0f);
 
 layout(std140) uniform material{
     float u_shininess;
@@ -79,31 +73,6 @@ layout(std140) uniform material{
     vec4 u_diffuse;
     vec4 u_specular;
 };
-
-layout(std140, row_major) uniform projection{
-    vec3 p_eye;
-    mat4 u_view;
-    mat4 u_proj;
-};
-
-uniform ALight u_aLights[MAX_LIGHTS_NUM];
-uniform PLight u_pLights[MAX_LIGHTS_NUM];
-uniform DLight u_dLights[MAX_LIGHTS_NUM];
-uniform SLight u_sLights[MAX_LIGHTS_NUM];
-
-out feedback{
-    mat4 b_out;
-    vec3 b_pos;
-    vec3 b_scale;
-    mat3 b_rotate;
-};
-
-out color{
-    vec4 v_ambient;
-    vec4 v_diffuse;
-    vec4 v_specular;
-};
-out vec2 v_texcoord;
 
 void calALight(ALight l) {
     v_ambient += l.ambient * l.factor;
@@ -153,18 +122,55 @@ void calSLight(SLight l, vec3 N, vec3 E, vec3 m_pos) {
     v_specular += l.specular * pow(cosA, u_shininess) * attenuation;
 }
 
+in vec3 v_N;
+in vec3 v_E;
+in vec3 v_mPos;
+in vec2 v_texcoord;
+
+uniform bool u_draw_contour;
+
+uniform Texture u_textures[MAX_TEXTURE_NUM];
+
+uniform ALight u_aLights[MAX_LIGHTS_NUM];
+uniform PLight u_pLights[MAX_LIGHTS_NUM];
+uniform DLight u_dLights[MAX_LIGHTS_NUM];
+uniform SLight u_sLights[MAX_LIGHTS_NUM];
+
+out vec4 fragColor;
+
 void main() {
-    v_ambient = vec4(0.0f);
-    v_diffuse = vec4(0.0f);
-    v_specular = vec4(0.0f);
+    if(u_draw_contour) {
+        fragColor = vec4(0.0, 0.67, 0.56, 1.0);
+        return;
+    }
 
-    vec3 m_pos;
-    if(!u_is_multiple) m_pos = u_mPos + (u_mRotate * (u_mScale * a_position));
-    else m_pos = u_mPos + (u_mRotate * (u_mScale * (a_matrix * vec4(a_position, 1.0)).xyz));
-    gl_Position = u_proj * (u_view * vec4(m_pos, 1.0));
+    vec4 ambient = vec4(0.0f);
+    vec4 diffuse = vec4(0.0f);
+    vec4 specular = vec4(0.0f);
 
-    bool flag[2] = bool[2]( false, false ); //if no lights
-    if(a_normal == vec3(0.0f)) { //no normals
+    bool flag[3] = bool[3]( false, false, false );
+    for(int i = 0; i < MAX_TEXTURE_NUM; ++i) {
+        if(u_textures[i].enable) {
+            if(u_textures[i].type == 1) {
+                flag[0] = true;
+                ambient += texture(u_textures[i].tex, v_texcoord);
+            } else if(u_textures[i].type == 2) {
+                flag[1] = true;
+                diffuse += texture(u_textures[i].tex, v_texcoord);
+            } else if(u_textures[i].type == 3) {
+                flag[2] = true;
+                specular += texture(u_textures[i].tex, v_texcoord);
+            }
+        }
+    }
+
+    if(flag[0]) ambient *= u_ambient;
+    if(flag[1]) diffuse *= u_diffuse;
+    if(flag[2]) specular *= u_specular;
+
+    flag[0] = false;
+    flag[1] = false;
+    if(v_N == vec3(0.0f)) { //no normals
         for(int i = 0; i < MAX_LIGHTS_NUM; ++i) {
             if(u_aLights[i].enable) {
                 flag[0] = true;
@@ -172,11 +178,6 @@ void main() {
             }
         }
     } else {
-        vec3 N;
-        if(!u_is_multiple) N = normalize(u_mRotate * (u_mScale * a_normal));
-        else N = normalize(u_mRotate * (u_mScale * (a_matrix * vec4(a_normal, 0.0)).xyz));
-        vec3 E = normalize(p_eye - m_pos);
-
         for(int i = 0; i < MAX_LIGHTS_NUM; ++i) {
             if(u_aLights[i].enable) {
                 flag[0] = true;
@@ -184,15 +185,15 @@ void main() {
             }
             if(u_dLights[i].enable) {
                 flag[1] = true;
-                calDLight(u_dLights[i], N, E);
+                calDLight(u_dLights[i], v_N, v_E);
             }
             if(u_pLights[i].enable) {
                 flag[1] = true;
-                calPLight(u_pLights[i], N, E, m_pos);
+                calPLight(u_pLights[i], v_N, v_E, v_mPos);
             }
             if(u_sLights[i].enable) {
                 flag[1] = true;
-                calSLight(u_sLights[i], N, E, m_pos);
+                calSLight(u_sLights[i], v_N, v_E, v_mPos);
             }
         }
     }
@@ -204,21 +205,10 @@ void main() {
     v_specular = clamp(v_specular, minVal, maxVal);
 
     if(flag[1]) {
-        v_ambient *= u_ambient;
-        v_diffuse *= u_diffuse;
-        v_specular *= u_specular;
+        fragColor = v_ambient * ambient + v_diffuse * diffuse + v_specular * specular;
     } else if(flag[0]) {
-        v_ambient *= u_ambient;
+        fragColor = v_ambient * ambient;
     } else {
-        v_ambient = u_ambient;
+        fragColor = ambient;
     }
-
-    b_pos = a_normal;
-    b_scale = u_mScale;
-    b_rotate = u_mRotate;
-    b_out = mat4(vec4(u_sLights[0].direction, u_sLights[0].outerCutOff),
-                vec4(u_sLights[0].position, u_sLights[0].innerCutOff),
-                vec4(m_pos, 1.0), vec4(a_normal, 0.0));
-
-    v_texcoord = a_texcoord;
 }

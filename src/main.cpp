@@ -6,9 +6,12 @@
 #include <iomanip>
 #include <string>
 #include <GL/glew.h>
+
+#include "./KHeader.h"
 #include "./Log.h"
 #include "./Window.h"
 #include "./Object/Plane.h"
+#include "./Object/Maze.h"
 #include "./Render/Shader.h"
 #include "./Core/Camera/Camera.h"
 #include "./Core/Light/Light.h"
@@ -171,46 +174,59 @@ void test() {
 	using namespace KEngine::KRenderer;
 	using namespace KEngine::KVector;
 	using namespace KEngine::KLight;
+	using namespace KEngine::KMaterial;
 
-	std::cout << Vec3(0, 0, -1).dot(Vec3(0, -5, -5)) << std::endl;
-
-	auto window = new KEngine::KWindow::Window("KEngine");
-	auto shader = new Shader(RES_PATH + "base.vert", RES_PATH + "base.frag");
+	auto window = new KEngine::KWindow::Window("KEngine", 1000, 700);
+	auto shader = new Shader(RES_PATH + "phong.vert", RES_PATH + "phong.frag");
+	//auto shader = new Shader(RES_PATH + "base.vert", RES_PATH + "base.frag");
 
 	auto camera = new KCamera::Camera(Vec3(0, 20, 30));
 
-	auto light = new PointLight(Vec3(0, 0, -5));
+	auto light = new PointLight(Vec3(0, 5, 5));
 	auto light1 = new SpotLight(Vec3(0, 6, 10), Vec3(0, 0, -1));
 
-	auto plane = new KEngine::KObject::Plane(30, 20, 30, 20);
-	auto plane1 = new KEngine::KObject::Plane(30, 20, 30, 20);
+	auto plane = new KEngine::KObject::Plane(30, 20, 1, 1);
+	auto plane1 = new KEngine::KObject::Plane(30, 20, 3, 2);
+	auto plane2 = new KEngine::KObject::Plane(20, 10, 2, 1);
 
 	shader->bind();
 	KObject::Object3D::bindUniform(shader);
 	KMaterial::Material::bindUniform(shader);
 	KCamera::Camera::bindUniform(shader);
 
+	plane->setPosition(Vec3(0, 5, -10));
+	auto material = new KMaterial::Material(/*KMaterial::Color(0.4, 0.4, 0.4, 1.0)*/);
+	material->addTexture(RES_PATH + "wall_texture.jpg");
+	plane->setMaterial(material);
+
+	plane1->addTexture(RES_PATH + "stone.png", KMaterial::TextureType::DIFFUSE);
+	plane1->addTexture(RES_PATH + "stone.png");
+	plane1->setRotation(-90, Vec3(1, 0, 0));
+	plane1->setPosition(Vec3(0, -5, 0));
+
+	plane2->setRotation(30, Vec3(-1, 0, 0));
+	plane2->setPosition(Vec3(0, -2.5, -7.85));
+	auto material1 = new Material(GREY, GREY, WHITE, 20);
+	material1->addTexture(RES_PATH + "floor.jpg", KMaterial::TextureType::SPECULAR);
+	material1->addTexture(RES_PATH + "floor.jpg", KMaterial::TextureType::DIFFUSE);
+	plane2->setMaterial(material1);
+
 	camera->setPerspective(45, 1.0, 0.1, 100);
 	camera->rotateView(30, Vec3(-1, 0, 0));
+	//camera->rotateCamera(90, Vec3(0, 1, 0));
 
 	//auto camera2 = new KCamera::Camera(Vec3(0, 20, -30));
 	//camera2->setPerspective(45, 1.0, 0.1, 100);
 	//camera2->rotateView(180, Vec3(0, 1, 0));
 	//camera2->rotateView(30, Vec3(1, 0, 0));
 
+	auto maze = new KObject::Maze(1, 1, 1);
+	maze->addMatrix();
+
 	Kboolean flag = false;
 
-	plane->setPosition(Vec3(0, 5, -10));
-	auto material = new KMaterial::Material(KMaterial::Color(0.4, 0.4, 0.4, 1.0));
-	//material->addTexture(RES_PATH + "floor.jpg");
-	plane->setMaterial(material);
-
-	//plane1->addTexture(RES_PATH + "stone.png", KMaterial::TextureType::DIFFUSE);
-	//plane1->addTexture(RES_PATH + "stone.png");
-	plane1->setRotation(-90, Vec3(1, 0, 0));
-	plane1->setPosition(Vec3(0, -5, 0));
-
 	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_STENCIL_TEST);
 
 	//plane->setRenderMode(GL_FRONT_AND_BACK, GL_LINE);
 
@@ -261,40 +277,110 @@ void test() {
 	camera->bind();
 	light->bind(shader, 0);
 	light1->bind(shader, 0);
+	Vec2 last_pos = window->getMouse();
+	Vec2 now_pos;
 
-	Kdouble now = window->getRunTime();
-	Ksize count = 0;
-	while (!window->closed())
-	{
-		++count;
+#if IMGUI_ENABLE
+	Kboolean movable = false;
+	Kboolean resizable = false;
+	Kboolean layout_mode = true;
+	KVector::Vec2 screenSize;
+	KVector::Vec3 position(0, 20, 30);
+	KVector::Vec3 axis(0, 1, 0);
+	Kfloat angle = 0;
+	KVector::Vec3 p_pos(0, -0.5, -7.25);
+#endif
+
+	while (!window->closed()) {
 		window->clear();
 
-		//plane->setRotation(window->getRunTime() * 10, Vec3(0, 1, 0));
+#if IMGUI_ENABLE
+		glDisable(GL_STENCIL_TEST);
+		ImGui_ImplGlfwGL3_NewFrame();
+		ImGuiWindowFlags flags = ImGuiWindowFlags_HorizontalScrollbar;
+		if (!movable) flags |= ImGuiWindowFlags_NoMove;
+		if (!resizable) flags |= ImGuiWindowFlags_NoResize;
+		screenSize = window->getWindowSize();
+		ImGui::Begin("GUI", nullptr, flags);
+		ImGui::SetWindowFontScale(1.2);
+		if (!movable) {
+			if (layout_mode) ImGui::SetWindowPos(ImVec2(screenSize.x - 300, 0));
+			else ImGui::SetWindowPos(ImVec2(0, 0));
+		}
+		if (!resizable) {
+			if (layout_mode) ImGui::SetWindowSize(ImVec2(300, screenSize.y));
+			else ImGui::SetWindowSize(ImVec2(screenSize.x, 200));
+		}
+		ImGui::Checkbox("movable", &movable);
+		ImGui::SameLine(100);
+		ImGui::Checkbox("resizable", &resizable);
+		ImGui::SameLine(200);
+		ImGui::Checkbox("layout", &layout_mode);
+		ImGui::Text("Your screen now is %.2f fps.", ImGui::GetIO().Framerate);
 
-// 		camera->rotateCamera(1, Vec3(0, 1, 0));
-// 		camera->bind();
 
-		light1->rotate(1, Vec3(1, 0, 0));
+		ImGui::DragFloat3("pos", &position[0], 0.3, -100, 100);
+		ImGui::DragFloat("angle", &angle, 0.3, -360, 360);
+		ImGui::DragFloat3("axis", &axis[0], 0.3, -100, 100);
+		ImGui::DragFloat3("plane2", &p_pos[0], 0.3, -20, 20);
+
+		ImGui::End();
+		ImGui::Render();
+		ImGui_ImplGlfwGL3_RenderDrawData(ImGui::GetDrawData());
+
+		if (layout_mode) glViewport(0, 0, screenSize.x - 300, screenSize.y);
+		else glViewport(0, 0, screenSize.x, screenSize.y);
+
+		//camera->setPosition(position);
+		//camera->setRotation(angle, axis);
+		//camera->bind();
+
+		plane2->setPosition(p_pos);
+		glEnable(GL_STENCIL_TEST);
+#endif
+
+		//maze->rotate(1, Vec3(0, 1, 1));
+
+		//camera->rotateCamera(1, Vec3(0, 1, 0));
+		//camera->bind();
+
+		if (window->getKeyStatus('W') || window->getKeyStatus(GLFW_KEY_UP)) {
+			camera->translate(camera->getDirection(KCamera::DirectionType::FORWARD));
+		} else if (window->getKeyStatus('S') || window->getKeyStatus(GLFW_KEY_DOWN)) {
+			camera->translate(camera->getDirection(KCamera::DirectionType::BACK));
+		} else if (window->getKeyStatus('A') || window->getKeyStatus(GLFW_KEY_LEFT)) {
+			camera->translate(camera->getDirection(KCamera::DirectionType::LEFT));
+		} else if (window->getKeyStatus('D') || window->getKeyStatus(GLFW_KEY_RIGHT)) {
+			camera->translate(camera->getDirection(KCamera::DirectionType::RIGHT));
+		}
+		now_pos = window->getMouse();
+		if ((now_pos -= last_pos).length() >= 10.0) {
+			camera->rotateView(now_pos.length(), Vec3(-now_pos.y, -now_pos.x, 0.0));
+			last_pos += now_pos;
+		}
+		camera->bind();
+
+		light1->rotate(3, Vec3(1, 0, 0));
 		light1->bindDirection(shader);
 
-		plane->bindTextures(shader);
-		plane->render();
-		plane1->bindTextures(shader);
-		plane1->render();
+		maze->render(shader);
+
+		plane->render(shader);
+		plane1->render(shader);
+		plane2->render(shader);
 
 		window->update();
-		if (window->getRunTime() - now >= 1.0) {
-			std::cout << count << "fps" << std::endl;
-			count = 0;
-			now = window->getRunTime();
-			//if (flag) light1->active(shader);
-			//else light1->unActive(shader);
-			//flag = !flag;
-		}
 	}
 
 	//glCall(std::cin.get();)
 
+	delete plane;
+	delete plane1;
+	delete plane2;
+	delete camera;
+	delete light;
+	delete light1;
+	delete maze;
 	delete shader;
 	delete window;
 	KMaterial::Texture::deleteAllTextures();

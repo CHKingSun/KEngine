@@ -22,8 +22,10 @@ namespace KEngine {
 		class Plane : public Object3D {
 		private:
 			std::vector<tvec2>* vertices; //left z to default(0)
-			std::vector<tvec2>* tex_coord;
+			std::vector<tvec2>* tex_coords;
 			std::vector<Face<Kuint>>* indices;
+			KBuffer::VertexBuffer* vbo;
+			KBuffer::VertexBuffer* tbo;
 			Kuint count;
 			KMaterial::Material* material;
 
@@ -42,10 +44,10 @@ namespace KEngine {
 						vertices->emplace_back(x + perx, y + pery);
 						vertices->emplace_back(x, y + pery);
 
-						tex_coord->emplace_back(0.0f, 0.0f);
-						tex_coord->emplace_back(1.0f, 0.0f);
-						tex_coord->emplace_back(1.0f, 1.0f);
-						tex_coord->emplace_back(0.0f, 1.0f);
+						tex_coords->emplace_back(0.0f, 0.0f);
+						tex_coords->emplace_back(1.0f, 0.0f);
+						tex_coords->emplace_back(1.0f, 1.0f);
+						tex_coords->emplace_back(0.0f, 1.0f);
 
 						Kuint t = (i * yslices + j) * 4;
 						indices->emplace_back(t, t + 1, t + 2);
@@ -63,21 +65,35 @@ namespace KEngine {
 
 			void initArray() {
 				vao = new KBuffer::VertexArray();
-				vao->allocate(new KBuffer::VertexBuffer(vertices->data(), sizeof(tvec2) * count * 4), A_POSITION, 2, GL_FLOAT);
-				vao->allocate(new KBuffer::VertexBuffer(tex_coord->data(), sizeof(tvec2) * count * 4), A_TEXCOORD, 2, GL_FLOAT);
+
+				vbo = new KBuffer::VertexBuffer(vertices->data(),
+					sizeof(tvec2) * vertices->size());
+				vao->allocate(vbo, A_POSITION, 2, GL_FLOAT);
+
+				tbo = new KBuffer::VertexBuffer(tex_coords->data(),
+					sizeof(tvec2) * tex_coords->size());
+				vao->allocate(tbo, A_TEXCOORD, 2, GL_FLOAT);
+
 				vao->setVertexAttrib3f(A_NORMAL, tvec3(0.0f, 0.0f, 1.0f));
-				ibo = new KBuffer::VertexBuffer(indices->data(), sizeof(Kuint) * count * 6, KBuffer::BufferType::INDEX);
+
+				ibo = new KBuffer::VertexBuffer(indices->data(),
+					sizeof(Face<Kuint>) * indices->size(), KBuffer::BufferType::INDEX);
+
+				delete vertices; vertices = nullptr;
+				delete tex_coords; tex_coords = nullptr;
+				delete indices; indices = nullptr;
 			}
 
 		public:
 			Plane(Kfloat width = 1.0f, Kfloat height = 1.0f,
 				Ksize xslices = 1, Ksize yslices = 1): Object3D("Plane"),
-				vertices(nullptr), tex_coord(nullptr), indices(nullptr){
+				vertices(nullptr), tex_coords(nullptr), indices(nullptr),
+				vbo(nullptr), tbo(nullptr){
 				count = xslices * yslices;
 				vertices = new std::vector<tvec2>();
 				vertices->reserve(count * 4);
-				tex_coord = new std::vector<tvec2>();
-				tex_coord->reserve(count * 4);
+				tex_coords = new std::vector<tvec2>();
+				tex_coords->reserve(count * 4);
 				indices = new std::vector<Face<Kuint>>();
 				indices->reserve(count * 2);
 				material = new KMaterial::Material();
@@ -88,7 +104,9 @@ namespace KEngine {
 			~Plane()override {
 				delete material;
 				delete vertices;
-				delete tex_coord;
+				delete tex_coords;
+				delete vbo;
+				delete tbo;
 				delete indices;
 			}
 
@@ -110,15 +128,36 @@ namespace KEngine {
 			}
 
 			void bindTextures(const KRenderer::Shader* shader)const {
+				if (shader == nullptr) return;
 				material->bindTextures(shader);
 			}
 
-			void render()const override {
+			void render(const KRenderer::Shader* shader = nullptr)const override {
+				//if you don't have textures or other uniforms to bind,
+				//just leave the shader nullptr.
 				bind();
+				bindTextures(shader);
 
+				glClear(GL_STENCIL_BUFFER_BIT);
+				glStencilFunc(GL_GEQUAL, 1, 0XFFFFFFFF);
+				glStencilOp(GL_KEEP, GL_ZERO, GL_REPLACE);
 				glDrawElements(GL_TRIANGLES, count * 6, GL_UNSIGNED_INT, nullptr);
 
+				shader->bindUniform1i("u_draw_contour", true);
+				glLineWidth(3.0);
+				glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+				glStencilFunc(GL_EQUAL, 0, 0XFFFFFFFF);
+				glDrawElements(GL_TRIANGLES, count * 6, GL_UNSIGNED_INT, nullptr);
+				glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+				shader->bindUniform1i("u_draw_contour", false);
+
+				unBindTextures(shader);
 				unBind();
+			}
+
+			void unBindTextures(const KRenderer::Shader* shader)const {
+				if (shader == nullptr) return;
+				material->unactiveTextures(shader);
 			}
 
 			Ksize getCount()const override {
