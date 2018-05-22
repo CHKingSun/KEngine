@@ -10,6 +10,7 @@
 #include <string>
 #include "./KHeader.h"
 #include "./Core/Vector/Vec2.h"
+#include "./Core/Matrix/Quaternion.h"
 #include "./Core/Material/Color.h"
 
 namespace KEngine{
@@ -89,7 +90,7 @@ namespace KEngine{
 				glfwGetCursorPos(window, &mx, &my);
 				mouse_pos.x = mx, mouse_pos.y = my;
 				glfwSwapInterval(1);
-				//glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED); //hide the mouse pointer
+				glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED); //hide the mouse pointer
 				is_active = true;
 				run_time = 0;
 				pause_time = 0;
@@ -103,14 +104,21 @@ namespace KEngine{
 			}
 
 			void keyEvent(Kint key, Kint action) {
-				keys[key] = action == GLFW_PRESS;
-				if (key == GLFW_KEY_ESCAPE) glfwSetWindowShouldClose(window, GLFW_TRUE);
+				keys[key] = action != GLFW_RELEASE;
+				if (key == GLFW_KEY_ESCAPE) {
+					glfwSetWindowShouldClose(window, GLFW_TRUE);
+				}
 			}
 
 			void mouseEvent(Kint button, Kint action) {
 				mouse[button] = action == GLFW_PRESS;
 				if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
 					is_active = !is_active;
+					if (is_active) {
+						glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+					} else {
+						glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+					}
 					//std::cout << "Pointer at: " << mx << ", " << my << std::endl;
 					//std::cout << "Run times: " << run_time << std::endl;
 					//std::cout << "Pause times: " << pause_time << std::endl;
@@ -157,6 +165,10 @@ namespace KEngine{
 
 			bool closed()const {
 				return glfwWindowShouldClose(window) == GLFW_TRUE;
+			}
+
+			bool actived()const {
+				return is_active;
 			}
 
 			void clear() {

@@ -50,7 +50,15 @@ namespace KEngine{
             const Kfloat& operator[](Kuint n)const{
                 assert(n >= 0 && n < 2);
                 return this->values[n]; //for const object, just get value.
-            }
+			}
+
+			inline bool operator==(const Vec2& v)const {
+				return x == v.x && y == v.y;
+			}
+			inline bool operator!=(const Vec2& v)const {
+				//return x != v.x || y != v.y;
+				return !this->operator==(v);
+			}
 
             Vec2& operator=(const Vec2 &v){
                 set(v.x, v.y);

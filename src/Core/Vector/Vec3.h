@@ -57,6 +57,14 @@ namespace KEngine{
                 return this->values[n];
             }
 
+			inline bool operator==(const Vec3& v)const {
+				return x == v.x && y == v.y && z == v.z;
+			}
+			inline bool operator!=(const Vec3& v)const {
+				//return x != v.x || y != v.y || z != v.z;
+				return !this->operator==(v);
+			}
+
             Vec3& operator=(const Vec3 &v){
                 set(v.x, v.y, v.z);
                 return *this;
@@ -132,7 +140,7 @@ namespace KEngine{
                 const F len2 = v.length<F>();
                 if(KFunction::isZero(len1) || KFunction::isZero(len2)) return static_cast<F>(KNAN);
 
-                return F(acos(dot<F>(v) / (len1 * len2)));
+                return KFunction::toDegree(acos(dot<F>(v) / (len1 * len2)));
             }
 
             static Vec3 cross(const Vec3 &v1, const Vec3 &v2){

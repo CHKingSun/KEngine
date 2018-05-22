@@ -26,6 +26,7 @@ namespace KEngine {
 			using tmat4 = KMatrix::Mat4;
 
 		private:
+			Ksize width, height;
 			tvec3* vertices;
 			tvec2* tex_coords;
 			tvec3* normals;
@@ -111,13 +112,40 @@ namespace KEngine {
 				delete indices; indices = nullptr;
 			}
 
+			void bindMatrices() {
+				if (matrices == nullptr) return;
+				delete mbo;
+				mbo = new KBuffer::VertexBuffer(matrices->data(),
+					matrices->size() * sizeof(tmat4));
+				vao->allocate(mbo, A_MATRIX, 4, GL_FLOAT, false, sizeof(tmat4), 0);
+				glVertexAttribDivisor(A_MATRIX, 1);
+				vao->allocate(mbo, A_MATRIX + 1, 4, GL_FLOAT, false,
+					sizeof(tmat4), sizeof(KVector::Vec4));
+				glVertexAttribDivisor(A_MATRIX + 1, 1);
+				vao->allocate(mbo, A_MATRIX + 2, 4, GL_FLOAT, false,
+					sizeof(tmat4), sizeof(KVector::Vec4) * 2);
+				glVertexAttribDivisor(A_MATRIX + 2, 1);
+				vao->allocate(mbo, A_MATRIX + 3, 4, GL_FLOAT, false,
+					sizeof(tmat4), sizeof(KVector::Vec4) * 3);
+				glVertexAttribDivisor(A_MATRIX + 3, 1);
+
+				delete matrices; matrices = nullptr;
+			}
+
+			bool isEdge(Ksize i, Ksize j) {
+				return i == 0 || (j == width + 1 && i != 0) || (i == height + 1 && j != width + 1) ||
+					   (j == 0 && i > 1 && i < width + 1);
+			}
+
 		public:
-			Maze(Kfloat w = 1.0, Kfloat h = 0.6, Kfloat d = 0.2):
+			Maze(Ksize w = 20, Ksize h = 20):
 				Object3D("Maze"), vertices(nullptr), tex_coords(nullptr),
 				normals(nullptr), indices(nullptr), matrices(nullptr), material(nullptr),
-				vbo(nullptr), tbo(nullptr), nbo(nullptr), mbo(nullptr) {
-				generate(w, h, d);
+				vbo(nullptr), tbo(nullptr), nbo(nullptr), mbo(nullptr),
+				width(w), height(h) {
+				generate(1.0, 1.0, 1.0);
 				initArray();
+				resetMaze(w, h);
 				material = new KMaterial::Material();
 				material->addTexture(RES_PATH + "stone.png");
 			}
@@ -134,40 +162,24 @@ namespace KEngine {
 				delete mbo;
 			}
 
-			void addMatrix() {
-				count = 30004;
+			void resetMaze(Ksize w = 20, Ksize h = 20) {
+				//note: remember to transpose for our matrix if row-first
+				//but in mat4 must be column-first.
+				width = w; height = h;
+				count = (width + 2) * (height + 2) + (width + height + 4) * 2 - 4 - 1;
+				delete matrices;
 				matrices = new std::vector<tmat4>();
 				matrices->reserve(count);
-				matrices->emplace_back(KFunction::translate(tvec3(3, 2, 5)).transpose());
-				matrices->emplace_back(KFunction::scale(tvec3(2, 2, 2)));
-				matrices->emplace_back(KFunction::translate(tvec3(-3, -1, 6)).transpose());
-				matrices->emplace_back((
-					KFunction::translate(tvec3(5, 5, 5)) * KFunction::rotate(30, tvec3(0, 1, 0))
-					).transpose());
-				for (int i = -300; i < 300; i += 2) {
-					for (int j = -100; j < 100; j += 2) {
-						matrices->emplace_back(KFunction::translate(tvec3(i, 0, j)).transpose());
+				Kfloat px = -Kfloat(width + 1) / 2.0;
+				Kfloat py = Kfloat(height + 1) / 2.0;
+				for (int i = 0; i < height + 2; ++i) {
+					for (int j = 0; j < width + 2; ++j) {
+						matrices->emplace_back(KFunction::translate(KVector::Vec3(px + j, 0, py - i)).transpose());
+						if (isEdge(i, j)) matrices->emplace_back(KFunction::translate(
+										  KVector::Vec3(px + j, 1, py - i)).transpose());
 					}
 				}
 				bindMatrices();
-			}
-
-			void bindMatrices() {
-				mbo = new KBuffer::VertexBuffer(matrices->data(),
-					matrices->size() * sizeof(tmat4));
-				vao->allocate(mbo, A_MATRIX, 4, GL_FLOAT, false, sizeof(tmat4), 0);
-				glVertexAttribDivisor(A_MATRIX, 1);
-				vao->allocate(mbo, A_MATRIX + 1, 4, GL_FLOAT, false,
-					sizeof(tmat4), sizeof(KVector::Vec4));
-				glVertexAttribDivisor(A_MATRIX + 1, 1);
-				vao->allocate(mbo, A_MATRIX + 2, 4, GL_FLOAT, false,
-					sizeof(tmat4), sizeof(KVector::Vec4) * 2);
-				glVertexAttribDivisor(A_MATRIX + 2, 1);
-				vao->allocate(mbo, A_MATRIX + 3, 4, GL_FLOAT, false,
-					sizeof(tmat4), sizeof(KVector::Vec4) * 3);
-				glVertexAttribDivisor(A_MATRIX + 3, 1);
-
-				delete matrices; matrices = nullptr;
 			}
 
 			void bind()const override {

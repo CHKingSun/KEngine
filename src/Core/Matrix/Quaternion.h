@@ -117,6 +117,14 @@ namespace KEngine{
                         2*(xz-wy), 2*(yz+wx), w2-x2-y2+z2
                 );
             }
+
+			Kfloat getAngle()const {
+				return acos(w) * 2;
+			}
+			KVector::Vec3 getAxis()const {
+				return KVector::Vec3(x, y, z).normalize();
+			}
+
             Mat4 toMat4()const {
                 Kfloat w2 = w * w;
                 Kfloat x2 = x * x;

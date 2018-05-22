@@ -14,6 +14,7 @@
 #include "./Object/Maze.h"
 #include "./Render/Shader.h"
 #include "./Core/Camera/Camera.h"
+#include "./Core/Camera/FirstCamera.h"
 #include "./Core/Light/Light.h"
 #include "./Core/Light/DirectionLight.h"
 #include "./Core/Light/PointLight.h"
@@ -180,10 +181,11 @@ void test() {
 	auto shader = new Shader(RES_PATH + "phong.vert", RES_PATH + "phong.frag");
 	//auto shader = new Shader(RES_PATH + "base.vert", RES_PATH + "base.frag");
 
-	auto camera = new KCamera::Camera(Vec3(0, 20, 30));
+	auto camera = new KCamera::FirstCamera(60, 1.0, 0.1, 1000);
+	auto camera2 = new KCamera::Camera(120, 1.0, 0.1, 1000);
 
-	auto light = new PointLight(Vec3(0, 5, 5));
-	auto light1 = new SpotLight(Vec3(0, 6, 10), Vec3(0, 0, -1));
+	auto light = new PointLight(Vec3(0, 5, 0));
+	auto light1 = new SpotLight(Vec3(0, 6, 6), Vec3(1, -1, 1));
 
 	auto plane = new KEngine::KObject::Plane(30, 20, 1, 1);
 	auto plane1 = new KEngine::KObject::Plane(30, 20, 3, 2);
@@ -194,36 +196,30 @@ void test() {
 	KMaterial::Material::bindUniform(shader);
 	KCamera::Camera::bindUniform(shader);
 
-	plane->setPosition(Vec3(0, 5, -10));
-	auto material = new KMaterial::Material(/*KMaterial::Color(0.4, 0.4, 0.4, 1.0)*/);
-	material->addTexture(RES_PATH + "wall_texture.jpg");
-	plane->setMaterial(material);
+	//plane->setPosition(Vec3(0, 5, -10));
+	//auto material = new KMaterial::Material(/*KMaterial::Color(0.4, 0.4, 0.4, 1.0)*/);
+	//material->addTexture(RES_PATH + "wall_texture.jpg");
+	//plane->setMaterial(material);
 
-	plane1->addTexture(RES_PATH + "stone.png", KMaterial::TextureType::DIFFUSE);
-	plane1->addTexture(RES_PATH + "stone.png");
-	plane1->setRotation(-90, Vec3(1, 0, 0));
-	plane1->setPosition(Vec3(0, -5, 0));
+	//plane1->addTexture(RES_PATH + "stone.png", KMaterial::TextureType::DIFFUSE);
+	//plane1->addTexture(RES_PATH + "stone.png");
+	//plane1->setRotation(-90, Vec3(1, 0, 0));
+	//plane1->setPosition(Vec3(0, -5, 0));
 
-	plane2->setRotation(30, Vec3(-1, 0, 0));
-	plane2->setPosition(Vec3(0, -2.5, -7.85));
-	auto material1 = new Material(GREY, GREY, WHITE, 20);
-	material1->addTexture(RES_PATH + "floor.jpg", KMaterial::TextureType::SPECULAR);
-	material1->addTexture(RES_PATH + "floor.jpg", KMaterial::TextureType::DIFFUSE);
-	plane2->setMaterial(material1);
+	//plane2->setRotation(30, Vec3(-1, 0, 0));
+	//plane2->setPosition(Vec3(0, -2.5, -7.85));
+	//auto material1 = new Material(GREY, GREY, WHITE, 20);
+	//material1->addTexture(RES_PATH + "floor.jpg", KMaterial::TextureType::SPECULAR);
+	//material1->addTexture(RES_PATH + "floor.jpg", KMaterial::TextureType::DIFFUSE);
+	//plane2->setMaterial(material1);
 
-	camera->setPerspective(45, 1.0, 0.1, 100);
-	camera->rotateView(30, Vec3(-1, 0, 0));
-	//camera->rotateCamera(90, Vec3(0, 1, 0));
+	camera->rotateView(90, Vec3(0, -1, 0));
+	camera2->rotateView(90, Vec3(-1, 0, 0));
 
-	//auto camera2 = new KCamera::Camera(Vec3(0, 20, -30));
-	//camera2->setPerspective(45, 1.0, 0.1, 100);
-	//camera2->rotateView(180, Vec3(0, 1, 0));
-	//camera2->rotateView(30, Vec3(1, 0, 0));
-
-	auto maze = new KObject::Maze(1, 1, 1);
-	maze->addMatrix();
-
-	Kboolean flag = false;
+	Kint w = 20, h = 20;
+	auto maze = new KObject::Maze(w, h);
+	camera2->setPosition(Vec3(0, (w > h ? w : h) / 2.0, 0));
+	camera->setPosition(Vec3(-Kfloat(w + 1) / 2.0, 1.0, Kfloat(h - 1) / 2.0));
 
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_STENCIL_TEST);
@@ -274,33 +270,35 @@ void test() {
 	glDisable(GL_RASTERIZER_DISCARD);
 #endif // FEEDBACK
 
-	camera->bind();
 	light->bind(shader, 0);
 	light1->bind(shader, 0);
 	Vec2 last_pos = window->getMouse();
 	Vec2 now_pos;
+	Vec2 screenSize;
+	Kboolean change_camera = false;
+	Kfloat speed = 0.03;
 
 #if IMGUI_ENABLE
 	Kboolean movable = false;
 	Kboolean resizable = false;
 	Kboolean layout_mode = true;
-	KVector::Vec2 screenSize;
 	KVector::Vec3 position(0, 20, 30);
 	KVector::Vec3 axis(0, 1, 0);
-	Kfloat angle = 0;
+	Kfloat angle = 10;
 	KVector::Vec3 p_pos(0, -0.5, -7.25);
 #endif
 
 	while (!window->closed()) {
 		window->clear();
 
+		now_pos = window->getMouse();
+		screenSize = window->getWindowSize();
 #if IMGUI_ENABLE
 		glDisable(GL_STENCIL_TEST);
 		ImGui_ImplGlfwGL3_NewFrame();
 		ImGuiWindowFlags flags = ImGuiWindowFlags_HorizontalScrollbar;
 		if (!movable) flags |= ImGuiWindowFlags_NoMove;
 		if (!resizable) flags |= ImGuiWindowFlags_NoResize;
-		screenSize = window->getWindowSize();
 		ImGui::Begin("GUI", nullptr, flags);
 		ImGui::SetWindowFontScale(1.2);
 		if (!movable) {
@@ -317,12 +315,29 @@ void test() {
 		ImGui::SameLine(200);
 		ImGui::Checkbox("layout", &layout_mode);
 		ImGui::Text("Your screen now is %.2f fps.", ImGui::GetIO().Framerate);
+		ImGui::Text("Your mouse pos is %.0f, %.0f", now_pos.x, now_pos.y);
 
-
-		ImGui::DragFloat3("pos", &position[0], 0.3, -100, 100);
-		ImGui::DragFloat("angle", &angle, 0.3, -360, 360);
-		ImGui::DragFloat3("axis", &axis[0], 0.3, -100, 100);
-		ImGui::DragFloat3("plane2", &p_pos[0], 0.3, -20, 20);
+		ImGui::Checkbox("camera", &change_camera);
+		ImGui::InputInt("width", &w);
+		ImGui::InputInt("height", &h);
+		if (ImGui::Button("OK")) {
+			if (w < 2 && h < 2) {
+				ImGui::Text("width or height is less than 2!");
+			} else {
+				maze->resetMaze(w, h);
+				camera2->setPosition(Vec3(0, (w > h ? w : h) / 2.0, 0));
+				camera->setPosition(Vec3(-Kfloat(w + 1) / 2.0, 1.0, Kfloat(h - 1) / 2.0));
+			}
+		}
+		//ImGui::DragFloat3("pos", &position[0], 0.3, -100, 100);
+		ImGui::DragFloat("angle", &angle, 0.3, 1, 178);
+		//camera2->setPerspective(angle, 1.0, 0.1, 1000);
+		//ImGui::DragFloat3("axis", &axis[0], 0.3, -100, 100);
+		//ImGui::DragFloat3("plane2", &p_pos[0], 0.3, -20, 20);
+		Vec3 dir = camera->getDirection(KEngine::KCamera::FORWARD);
+		ImGui::Text("Your camera direction:\n%.2f, %.2f, %.2f.", dir.x, dir.y, dir.z);
+		dir = camera->getDirection(KEngine::KCamera::RIGHT);
+		ImGui::Text("Your camera's right:\n%.2f, %.2f, %.2f.", dir.x, dir.y, dir.z);
 
 		ImGui::End();
 		ImGui::Render();
@@ -332,10 +347,10 @@ void test() {
 		else glViewport(0, 0, screenSize.x, screenSize.y);
 
 		//camera->setPosition(position);
-		//camera->setRotation(angle, axis);
+		//camera->rotateView(angle, axis);
 		//camera->bind();
 
-		plane2->setPosition(p_pos);
+		//plane2->setPosition(p_pos);
 		glEnable(GL_STENCIL_TEST);
 #endif
 
@@ -344,30 +359,43 @@ void test() {
 		//camera->rotateCamera(1, Vec3(0, 1, 0));
 		//camera->bind();
 
-		if (window->getKeyStatus('W') || window->getKeyStatus(GLFW_KEY_UP)) {
-			camera->translate(camera->getDirection(KCamera::DirectionType::FORWARD));
-		} else if (window->getKeyStatus('S') || window->getKeyStatus(GLFW_KEY_DOWN)) {
-			camera->translate(camera->getDirection(KCamera::DirectionType::BACK));
-		} else if (window->getKeyStatus('A') || window->getKeyStatus(GLFW_KEY_LEFT)) {
-			camera->translate(camera->getDirection(KCamera::DirectionType::LEFT));
-		} else if (window->getKeyStatus('D') || window->getKeyStatus(GLFW_KEY_RIGHT)) {
-			camera->translate(camera->getDirection(KCamera::DirectionType::RIGHT));
+		if (window->actived()) {
+			if (window->getKeyStatus('W') || window->getKeyStatus(GLFW_KEY_UP)) {
+				camera->translate(camera->getDirection(KCamera::DirectionType::FORWARD) *= Vec3(speed, 0, speed));
+			}
+			else if (window->getKeyStatus('S') || window->getKeyStatus(GLFW_KEY_DOWN)) {
+				camera->translate(camera->getDirection(KCamera::DirectionType::BACK) *= Vec3(speed, 0, speed));
+			}
+			else if (window->getKeyStatus('A') || window->getKeyStatus(GLFW_KEY_LEFT)) {
+				camera->translate(camera->getDirection(KCamera::DirectionType::LEFT) *= Vec3(speed, 0, speed));
+			}
+			else if (window->getKeyStatus('D') || window->getKeyStatus(GLFW_KEY_RIGHT)) {
+				camera->translate(camera->getDirection(KCamera::DirectionType::RIGHT) *= Vec3(speed, 0, speed));
+			}
+			if (last_pos != now_pos) {
+				now_pos -= last_pos;
+				Kfloat radius = screenSize.length();
+				Kfloat p2xy = now_pos.length();
+				//the default center direction is (0, 0, 1) so we just put another direction int to function.
+				camera->rotateView(Vec3(-now_pos.x, now_pos.y, KFunction::distance(screenSize, now_pos)));
+				//if (now_pos.x != 0) camera->rotateView(Vec3(-now_pos.x, 0, sqrt(radius * radius - now_pos.x * now_pos.x)));
+				//if (now_pos.y != 0) camera->rotateView(Vec3(0, now_pos.y, sqrt(radius * radius - now_pos.y * now_pos.y)));
+				last_pos += now_pos;
+			}
+			if (!change_camera) camera->bind();
+			else camera2->bind();
+		} else {
+			last_pos = now_pos;
 		}
-		now_pos = window->getMouse();
-		if ((now_pos -= last_pos).length() >= 10.0) {
-			camera->rotateView(now_pos.length(), Vec3(-now_pos.y, -now_pos.x, 0.0));
-			last_pos += now_pos;
-		}
-		camera->bind();
 
-		light1->rotate(3, Vec3(1, 0, 0));
+		light1->rotate(3, Vec3(0, 1, 0));
 		light1->bindDirection(shader);
 
 		maze->render(shader);
 
-		plane->render(shader);
-		plane1->render(shader);
-		plane2->render(shader);
+		//plane->render(shader);
+		//plane1->render(shader);
+		//plane2->render(shader);
 
 		window->update();
 	}

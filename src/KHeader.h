@@ -92,6 +92,7 @@ namespace KEngine{
 
     namespace KCamera{
         class Camera;
+		class FirstCamera;
     }
 
     namespace KController{

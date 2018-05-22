@@ -25,13 +25,13 @@ namespace KEngine{
 			RIGHT = GLFW_KEY_RIGHT, LEFT = GLFW_KEY_LEFT, BACK = GLFW_KEY_DOWN, FORWARD = GLFW_KEY_UP
 		};
 
-        class Camera{
+		class Camera {
 			using tvec3 = KVector::Vec3;
-            using tmat3 = KMatrix::Mat3;
-            using tquaternion = KMatrix::Quaternion;
+			using tmat3 = KMatrix::Mat3;
+			using tquaternion = KMatrix::Quaternion;
 			using tmat4 = KMatrix::Mat4;
 
-        private:
+		protected:
             tvec3 position;
             tquaternion view; //view rotation
             tmat4 projection;
@@ -45,16 +45,17 @@ namespace KEngine{
 			const static std::string PROJ; //u_proj
 
 			tmat4 toViewMatrix()const {
-				tmat3 tmp = view.toMat3();
-				return tmat4(tmp, tmp * -position) * (-rotate).toMat4();
+				tmat3 tmp(view.toMat3());
+				return tmat4(tmp, tmp * -position) *= (-rotate).toMat4();
 			}
 
         public:
             explicit Camera(const tvec3 &pos = tvec3()): position(pos),
-                     view(tquaternion()), rotate(tquaternion()) {
+                     view(tquaternion()), rotate(tquaternion()){
 				setOrtho(-1, 1, -1, 1, -1, 1);
 			} //ortho
-            Camera(const tvec3 &eye, const tvec3 &center, const tvec3 &up): rotate(tquaternion()) {
+            Camera(const tvec3 &eye, const tvec3 &center, const tvec3 &up):
+				rotate(tquaternion()) {
 				setOrtho(-1, 1, -1, 1, -1, 1);
                 setView(eye, center, up);
             }
@@ -101,7 +102,6 @@ namespace KEngine{
             void setPerspective(const Kfloat &fovy, const Kfloat &aspect,
 				                const Kfloat &zNear, const Kfloat &zFar){
                 projection = KFunction::perspective(fovy, aspect, zNear, zFar);
-//                zdepth = tvec2(zNear, zFar);
 
             }
             void setOrtho(const Kfloat &left, const Kfloat &right, const Kfloat &bottom,
@@ -132,17 +132,19 @@ namespace KEngine{
 				switch (type)
 				{
 				case KEngine::KCamera::FORWARD:
-					return ((rotate * view) * tvec3(0, 0, -1)).normalize();
+					return (-view * tvec3(0, 0, -1)).normalize();
+					//note: we at first use (0, 0, -1) as center(or (0, 0, 0) when eye position(0, 0, 1));
+					//view is a inverse rotate matrix, 
 				case KEngine::KCamera::BACK:
-					return ((rotate * view) * tvec3(0, 0, 1)).normalize();
+					return (-view * tvec3(0, 0, 1)).normalize();
 				case KEngine::KCamera::LEFT:
-					return ((rotate * view) * tvec3(-1, 0, 0)).normalize();
+					return (-view * tvec3(-1, 0, 0)).normalize();
 				case KEngine::KCamera::RIGHT:
-					return ((rotate * view) * tvec3(1, 0, 0)).normalize();
+					return (-view * tvec3(1, 0, 0)).normalize();
 				default:
 					break;
 				}
-				return ((rotate * view) * tvec3(0, 0, -1)).normalize();
+				return (-view * tvec3(0, 0, -1)).normalize();
 			}
         };
 

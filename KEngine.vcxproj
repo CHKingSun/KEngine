@@ -160,9 +160,8 @@
     <ClInclude Include="lib\imgui\stb_rect_pack.h" />
     <ClInclude Include="lib\imgui\stb_textedit.h" />
     <ClInclude Include="lib\imgui\stb_truetype.h" />
-    <ClInclude Include="src\Controller\CameraController.h" />
-    <ClInclude Include="src\Controller\LightController.h" />
     <ClInclude Include="src\Core\Camera\Camera.h" />
+    <ClInclude Include="src\Core\Camera\FirstCamera.h" />
     <ClInclude Include="src\Core\function.h" />
     <ClInclude Include="src\Core\Light\DirectionLight.h" />
     <ClInclude Include="src\Core\Light\Light.h" />
