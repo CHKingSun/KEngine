@@ -65,7 +65,7 @@ namespace KEngine{
 				view(tquaternion()), rotate(tquaternion()) {
                 setPerspective(fovy, aspect, zNear, zFar);
             }
-			~Camera() = default;
+			virtual ~Camera() = default;
 
 			static void bindUniform(const KRenderer::Shader *shader) {
 				block = std::make_shared<KBuffer::UnifromBlock>(shader, PROJECTION.c_str());
@@ -127,6 +127,9 @@ namespace KEngine{
             void translate(const tvec3 &v){
                 position += v;
             }
+			const tvec3& getPosition()const {
+				return position;
+			}
 
 			tvec3 getDirection(DirectionType type = FORWARD)const {
 				switch (type)

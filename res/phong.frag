@@ -165,8 +165,11 @@ void main() {
     }
 
     if(flag[0]) ambient *= u_ambient;
+    else ambient = u_ambient * vec4(0.6, 0.6, 0.6, 0.6);
     if(flag[1]) diffuse *= u_diffuse;
+    else diffuse = u_diffuse * vec4(0.6, 0.6, 0.6, 0.6);
     if(flag[2]) specular *= u_specular;
+    else specular = u_specular * vec4(0.6, 0.6, 0.6, 0.6);
 
     flag[0] = false;
     flag[1] = false;

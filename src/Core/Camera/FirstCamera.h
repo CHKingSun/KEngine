@@ -17,14 +17,14 @@ namespace KEngine {
 			const static tvec3 restrictAxis;
 
 		public:
-			explicit FirstCamera(const tvec3 &pos = tvec3(), Kfloat angle = 15.0): Camera(pos), restrictAngle(angle) {} //ortho
+			explicit FirstCamera(const tvec3 &pos = tvec3(), Kfloat angle = 0.0): Camera(pos), restrictAngle(angle) {} //ortho
 			FirstCamera(const tvec3 &eye, const tvec3 &center, const tvec3 &up, Kfloat angle = 15.0):
 				Camera(eye, center, up), restrictAngle(angle) {}
 			FirstCamera(const Kfloat &fovy, const Kfloat &aspect,
 				const Kfloat &zNear, const Kfloat &zFar,
 				const tvec3 &pos = tvec3(), Kfloat angle = 15.0):
 				Camera(fovy, aspect, zNear, zFar, pos), restrictAngle(angle) {}
-			~FirstCamera() = default;
+			~FirstCamera() override = default;
 
 			void setRestrictAngle(Kfloat angle) {
 				restrictAngle = angle;
@@ -54,8 +54,9 @@ namespace KEngine {
 					//view *= tquaternion(up.getAngle(center), -view * up.cross(center));
 				}
 				if (!KFunction::isZero(v.x)) {
-					if (v.x < 0) view *= tquaternion(center.getAngle(tvec3(v.x, 0, v.z)), tvec3(0, 1, 0));
-					else view *= tquaternion(center.getAngle(tvec3(v.x, 0, v.z)), tvec3(0, -1, 0));
+					view *= tquaternion(center.getAngle(tvec3(v.x, 0, v.z)), tvec3(0, -v.x, 0));
+					//if (v.x < 0) view *= tquaternion(center.getAngle(tvec3(v.x, 0, v.z)), tvec3(0, 1, 0));
+					//else view *= tquaternion(center.getAngle(tvec3(v.x, 0, v.z)), tvec3(0, -1, 0));
 					//the following is the same as before.
 					//tvec3 right(v.x, 0, v.z);
 					//view *= tquaternion(right.getAngle(center), right.cross(center));

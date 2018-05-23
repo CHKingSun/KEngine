@@ -113,6 +113,9 @@ namespace KEngine{
             void translate(const tvec3 &v){
                 position += v;
             }
+			void setPosition(const tvec3& v) {
+				position = v;
+			}
         };
     }
 }

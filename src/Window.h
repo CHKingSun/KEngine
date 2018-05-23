@@ -105,20 +105,20 @@ namespace KEngine{
 
 			void keyEvent(Kint key, Kint action) {
 				keys[key] = action != GLFW_RELEASE;
-				if (key == GLFW_KEY_ESCAPE) {
-					glfwSetWindowShouldClose(window, GLFW_TRUE);
+				if (keys[GLFW_KEY_ESCAPE]) {
+					is_active = !is_active;
+					if (is_active) {
+						glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+					}
+					else {
+						glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+					}
 				}
 			}
 
 			void mouseEvent(Kint button, Kint action) {
 				mouse[button] = action == GLFW_PRESS;
 				if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
-					is_active = !is_active;
-					if (is_active) {
-						glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-					} else {
-						glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-					}
 					//std::cout << "Pointer at: " << mx << ", " << my << std::endl;
 					//std::cout << "Run times: " << run_time << std::endl;
 					//std::cout << "Pause times: " << pause_time << std::endl;
@@ -169,6 +169,10 @@ namespace KEngine{
 
 			bool actived()const {
 				return is_active;
+			}
+
+			void closeWindow()const {
+				glfwSetWindowShouldClose(window, GLFW_TRUE);
 			}
 
 			void clear() {

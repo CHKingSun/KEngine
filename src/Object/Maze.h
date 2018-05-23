@@ -27,19 +27,26 @@ namespace KEngine {
 
 		private:
 			Ksize width, height;
+			Kuint count;
+
 			tvec3* vertices;
 			tvec2* tex_coords;
 			tvec3* normals;
 			std::vector<Face<Kubyte>>* indices; //we just need 36 point
 			std::vector<tmat4>* matrices;
+
 			KBuffer::VertexBuffer* vbo;
 			KBuffer::VertexBuffer* tbo;
 			KBuffer::VertexBuffer* nbo;
 			KBuffer::VertexBuffer* mbo;
-			Kuint count;
+
 			KMaterial::Material* material;
 
-			void generate(Kfloat width, Kfloat height, Kfloat depth) {
+			Ksize entry, exit;
+			Kboolean* maze;
+			//We can use a stack to save the track later.
+
+			void generateBox(Kfloat width, Kfloat height, Kfloat depth) {
 				Kfloat x = width / 2.0f;
 				Kfloat y = height / 2.0f;
 				Kfloat z = depth / 2.0f;
@@ -91,6 +98,78 @@ namespace KEngine {
 				indices->emplace_back(22, 23, 20);
 			}
 
+			Ksize generateMaze() {
+				delete maze;
+				maze = new Kboolean[width * height];
+				memset(maze, 0, width * height); //sizeof(bool) = sizeof(char) = 1
+				int a; //generate entry of the maze.
+				srand(time(nullptr));
+				do { a = rand() % (width - 1); } while (!a); //do not use 0 or width-1 column as the entry.
+				entry = height * a;
+				maze[entry] = true;
+				exit = 0;
+				return width * height - 1 - mazeGenerator(entry + 1);
+			}
+
+			Ksize mazeGenerator(Ksize now_pos) {
+				maze[now_pos] = true;
+
+				int a[4] = { 0, 1, 2, 3 };//0 = right; 1 = up; 2 = left; 3 = down.
+				for (int i = 0; i < 4; i++) { //for random direction.
+					int j = rand() % 4;
+					if (i == j) {
+						i--; continue;
+					}
+					int t = a[i];
+					a[i] = a[j];
+					a[j] = t;
+				}
+
+				Ksize count = 1;
+				for (int dir : a) {
+					switch (dir) {
+					case 0:
+						if (now_pos % height < height - 2 &&
+							maze[now_pos + 1] == false && //next right
+							maze[now_pos + 2] == false && //next right's right
+							maze[now_pos + height + 1] == false && //next right's up
+							maze[now_pos - height + 1] == false) //next right's down
+							count += mazeGenerator(now_pos + 1); //right can be the next step.
+						else if (now_pos % height == height - 2 && exit == 0) { //generete an exit if not exists.
+							exit = now_pos + 1;
+							maze[exit] = true;
+							++count;
+						}
+						break;
+					case 1:
+						if (now_pos < height * (width - 2) &&
+							maze[now_pos + height] == false &&
+							maze[now_pos + height + 1] == false &&
+							maze[now_pos + 2 * height] == false &&
+							maze[now_pos + height - 1] == false)
+							count += mazeGenerator(now_pos + height);
+						break;
+					case 2:
+						if (now_pos % height > 1 &&
+							maze[now_pos - 1] == false &&
+							maze[now_pos + height - 1] == false &&
+							maze[now_pos - 2] == false &&
+							maze[now_pos - height - 1] == false)
+							count += mazeGenerator(now_pos - 1);
+						break;
+					case 3:
+						if (now_pos > 2 * height &&
+							maze[now_pos - height] == false &&
+							maze[now_pos - height + 1] == false &&
+							maze[now_pos - height - 1] == false &&
+							maze[now_pos - 2 * height] == false)
+							count += mazeGenerator(now_pos - height);
+						break;
+					}
+				}
+				return count;
+			}
+
 			void initArray() {
 				vao = new KBuffer::VertexArray();
 
@@ -100,7 +179,7 @@ namespace KEngine {
 				tbo = new KBuffer::VertexBuffer(tex_coords, sizeof(tvec2) * 24);
 				vao->allocate(tbo, A_TEXCOORD, 2, GL_FLOAT);
 
-				nbo = new KBuffer::VertexBuffer(normals, sizeof(tvec2) * 24);
+				nbo = new KBuffer::VertexBuffer(normals, sizeof(tvec3) * 24);
 				vao->allocate(nbo, A_NORMAL, 3, GL_FLOAT);
 
 				ibo = new KBuffer::VertexBuffer(indices->data(),
@@ -133,17 +212,16 @@ namespace KEngine {
 			}
 
 			bool isEdge(Ksize i, Ksize j) {
-				return i == 0 || (j == width + 1 && i != 0) || (i == height + 1 && j != width + 1) ||
-					   (j == 0 && i > 1 && i < width + 1);
+				return i == 0 || (j == width - 1 && i != 0) || (i == height - 1 && j != width - 1) ||
+					   (j == 0 && i != 0 && i != width - 1 && i != entry);
 			}
 
 		public:
 			Maze(Ksize w = 20, Ksize h = 20):
 				Object3D("Maze"), vertices(nullptr), tex_coords(nullptr),
 				normals(nullptr), indices(nullptr), matrices(nullptr), material(nullptr),
-				vbo(nullptr), tbo(nullptr), nbo(nullptr), mbo(nullptr),
-				width(w), height(h) {
-				generate(1.0, 1.0, 1.0);
+				vbo(nullptr), tbo(nullptr), nbo(nullptr), mbo(nullptr), maze(nullptr) {
+				generateBox(1.0, 1.0, 1.0);
 				initArray();
 				resetMaze(w, h);
 				material = new KMaterial::Material();
@@ -160,26 +238,32 @@ namespace KEngine {
 				delete vbo;
 				delete tbo;
 				delete mbo;
+				delete maze;
 			}
 
 			void resetMaze(Ksize w = 20, Ksize h = 20) {
 				//note: remember to transpose for our matrix if row-first
 				//but in mat4 must be column-first.
-				width = w; height = h;
-				count = (width + 2) * (height + 2) + (width + height + 4) * 2 - 4 - 1;
+				width = w + 2; height = h + 2;
+				count = width * height;
+				count += generateMaze();
 				delete matrices;
 				matrices = new std::vector<tmat4>();
 				matrices->reserve(count);
-				Kfloat px = -Kfloat(width + 1) / 2.0;
-				Kfloat py = Kfloat(height + 1) / 2.0;
-				for (int i = 0; i < height + 2; ++i) {
-					for (int j = 0; j < width + 2; ++j) {
+				Kfloat px = -Kfloat(width - 1) / 2.0;
+				Kfloat py = Kfloat(height - 1) / 2.0;
+				for (int i = 0; i < height; ++i) {
+					for (int j = 0; j < width; ++j) {
 						matrices->emplace_back(KFunction::translate(KVector::Vec3(px + j, 0, py - i)).transpose());
-						if (isEdge(i, j)) matrices->emplace_back(KFunction::translate(
+						if (!maze[i * height+ j]) matrices->emplace_back(KFunction::translate(
 										  KVector::Vec3(px + j, 1, py - i)).transpose());
 					}
 				}
 				bindMatrices();
+			}
+
+			tvec3 getStartPosition()const {
+				return tvec3(-Kfloat(width - 1) / 2.0 + entry % height, 1, Kfloat(height - 1) / 2.0 - entry / height);
 			}
 
 			void bind()const override {
@@ -197,14 +281,21 @@ namespace KEngine {
 				bindTextures(shader);
 				shader->bindUniform1i("u_is_multiple", true);
 
+				glStencilFunc(GL_ALWAYS, 1, 0xFF);
+				glStencilMask(0xFF);
 				glDrawElementsInstanced(GL_TRIANGLES, 36, GL_UNSIGNED_BYTE, nullptr, count);
 
-				//shader->bindUniform1i("u_draw_contour", true);
-				//glLineWidth(3.0);
-				//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-				//glDrawElementsInstanced(GL_TRIANGLES, 36, GL_UNSIGNED_BYTE, nullptr, count);
-				//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-				//shader->bindUniform1i("u_draw_contour", false);
+				shader->bindUniform1i("u_draw_contour", true);
+				glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+				glStencilMask(0x00);
+				//glDisable(GL_DEPTH_TEST);
+				glLineWidth(3.0);
+				glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+				glDrawElementsInstanced(GL_TRIANGLES, 36, GL_UNSIGNED_BYTE, nullptr, count);
+				glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+				glStencilMask(0xFF);
+				//glEnable(GL_DEPTH_TEST);
+				shader->bindUniform1i("u_draw_contour", false);
 
 				shader->bindUniform1i("u_is_multiple", false);
 				unBindTextures(shader);
