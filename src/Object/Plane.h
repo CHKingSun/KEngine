@@ -24,8 +24,6 @@ namespace KEngine {
 			std::vector<tvec2>* vertices; //left z to default(0)
 			std::vector<tvec2>* tex_coords;
 			std::vector<Face<Kuint>>* indices;
-			KBuffer::VertexBuffer* vbo;
-			KBuffer::VertexBuffer* tbo;
 			Kuint count;
 			KMaterial::Material* material;
 
@@ -87,8 +85,7 @@ namespace KEngine {
 		public:
 			Plane(Kfloat width = 1.0f, Kfloat height = 1.0f,
 				Ksize xslices = 1, Ksize yslices = 1): Object3D("Plane"),
-				vertices(nullptr), tex_coords(nullptr), indices(nullptr),
-				vbo(nullptr), tbo(nullptr){
+				vertices(nullptr), tex_coords(nullptr), indices(nullptr) {
 				count = xslices * yslices;
 				vertices = new std::vector<tvec2>();
 				vertices->reserve(count * 4);
@@ -105,8 +102,6 @@ namespace KEngine {
 				delete material;
 				delete vertices;
 				delete tex_coords;
-				delete vbo;
-				delete tbo;
 				delete indices;
 			}
 
@@ -119,17 +114,26 @@ namespace KEngine {
 
 			void addTexture(const std::string &path, KMaterial::TextureType type =
 				KMaterial::TextureType::AMBIENT) {
+				if (material == nullptr) {
+					std::cerr << "Please set a material first!" << std::endl;
+					return;
+				}
 				material->addTexture(path, type);
 			}
 
 			void bind()const override {
 				Object3D::bind();
-				material->bind();
+				if(material != nullptr) material->bind();
 			}
 
 			void bindTextures(const KRenderer::Shader* shader)const {
-				if (shader == nullptr) return;
+				if (shader == nullptr || material == nullptr) return;
 				material->bindTextures(shader);
+			}
+
+			void unBindTextures(const KRenderer::Shader* shader)const {
+				if (shader == nullptr || material == nullptr) return;
+				material->unactiveTextures(shader);
 			}
 
 			void render(const KRenderer::Shader* shader = nullptr)const override {
@@ -155,16 +159,8 @@ namespace KEngine {
 				unBind();
 			}
 
-			void unBindTextures(const KRenderer::Shader* shader)const {
-				if (shader == nullptr) return;
-				material->unactiveTextures(shader);
-			}
-
 			Ksize getCount()const override {
 				return count * 6;
-			}
-			GLenum getComponent()const override {
-				return GL_UNSIGNED_SHORT;
 			}
 		};
 	}

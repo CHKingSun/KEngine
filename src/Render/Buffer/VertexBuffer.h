@@ -5,7 +5,6 @@
 #ifndef KENGINE_VERTEX_BUFFER_H
 #define KENGINE_VERTEX_BUFFER_H
 
-#include <unordered_set>
 #include <GL/glew.h>
 #include "../../KHeader.h"
 

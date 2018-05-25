@@ -20,8 +20,6 @@ namespace KEngine{
         };
 
         class Light{
-            friend class KController::LightController;
-
 		protected:
             mutable Kuint activeId;
             LightType type;

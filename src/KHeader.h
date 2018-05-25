@@ -109,6 +109,7 @@ namespace KEngine{
 		class VertexArray;
 		class UnifromBlock;
 		class BackBuffer;
+		class FrameBuffer;
 	}
 
     namespace KMaterial{
@@ -122,6 +123,7 @@ namespace KEngine{
 		class Object3D;
 		class Plane;
 		class Maze;
+		class Sphere;
 	}
 
     namespace KWindow{

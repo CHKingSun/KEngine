@@ -35,9 +35,6 @@ namespace KEngine {
 			std::vector<Face<Kubyte>>* indices; //we just need 36 point
 			std::vector<tmat4>* matrices;
 
-			KBuffer::VertexBuffer* vbo;
-			KBuffer::VertexBuffer* tbo;
-			KBuffer::VertexBuffer* nbo;
 			KBuffer::VertexBuffer* mbo;
 
 			KMaterial::Material* material;
@@ -211,20 +208,17 @@ namespace KEngine {
 				delete matrices; matrices = nullptr;
 			}
 
-			bool isEdge(Ksize i, Ksize j) {
-				return i == 0 || (j == width - 1 && i != 0) || (i == height - 1 && j != width - 1) ||
-					   (j == 0 && i != 0 && i != width - 1 && i != entry);
-			}
-
 		public:
 			Maze(Ksize w = 20, Ksize h = 20):
 				Object3D("Maze"), vertices(nullptr), tex_coords(nullptr),
 				normals(nullptr), indices(nullptr), matrices(nullptr), material(nullptr),
-				vbo(nullptr), tbo(nullptr), nbo(nullptr), mbo(nullptr), maze(nullptr) {
+				mbo(nullptr), maze(nullptr) {
 				generateBox(1.0, 1.0, 1.0);
 				initArray();
 				resetMaze(w, h);
 				material = new KMaterial::Material();
+				material->shininess = 1;
+				material->addTexture(RES_PATH + "stone.png", KMaterial::DIFFUSE);
 				material->addTexture(RES_PATH + "stone.png");
 			}
 
@@ -232,13 +226,11 @@ namespace KEngine {
 				delete[] vertices;
 				delete[] tex_coords;
 				delete[] normals;
+				delete[] maze;
 				delete indices;
 				delete matrices;
 				delete material;
-				delete vbo;
-				delete tbo;
 				delete mbo;
-				delete maze;
 			}
 
 			void resetMaze(Ksize w = 20, Ksize h = 20) {
@@ -268,12 +260,17 @@ namespace KEngine {
 
 			void bind()const override {
 				Object3D::bind();
-				material->bind();
+				if(material != nullptr) material->bind();
 			}
 
 			void bindTextures(const KRenderer::Shader* shader)const {
-				if (shader == nullptr) return;
+				if (shader == nullptr || material == nullptr) return;
 				material->bindTextures(shader);
+			}
+
+			void unBindTextures(const KRenderer::Shader* shader)const {
+				if (shader == nullptr || material == nullptr) return;
+				material->unactiveTextures(shader);
 			}
 
 			void render(const KRenderer::Shader* shader= nullptr)const override {
@@ -302,17 +299,8 @@ namespace KEngine {
 				unBind();
 			}
 
-			void unBindTextures(const KRenderer::Shader* shader)const {
-				if (shader == nullptr) return;
-				material->unactiveTextures(shader);
-			}
-
 			Ksize getCount()const override {
 				return count;
-			}
-
-			GLenum getComponent()const override {
-				return GL_UNSIGNED_BYTE;
 			}
 		};
 	}

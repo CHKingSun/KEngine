@@ -32,6 +32,10 @@ namespace KEngine {
 			KBuffer::VertexArray* vao;
 			KBuffer::VertexBuffer* ibo;
 
+			KBuffer::VertexBuffer* vbo;
+			KBuffer::VertexBuffer* tbo;
+			KBuffer::VertexBuffer* nbo;
+
 			std::string type;
 
 			static std::shared_ptr<KBuffer::UnifromBlock> block;
@@ -48,6 +52,7 @@ namespace KEngine {
 
 		protected:
 			Object3D(std::string type) : type(type), vao(nullptr), ibo(nullptr),
+				vbo(nullptr), tbo(nullptr), nbo(nullptr),
 				position(KVector::Vec3(0)), rotation(KMatrix::Quaternion()),
 				m_scale(KVector::Vec3(1.0f)){};
 
@@ -56,6 +61,9 @@ namespace KEngine {
 				std::cout << type << std::endl;
 				delete vao;
 				delete ibo;
+				delete vbo;
+				delete tbo;
+				delete nbo;
 			}
 
 			const std::string& getType()const {
@@ -63,7 +71,8 @@ namespace KEngine {
 			}
 
 			static void bindUniform(const KRenderer::Shader* shader) {
-				block = std::make_shared<KBuffer::UnifromBlock>(shader, MODEL.c_str());
+				if(block == nullptr) block = std::make_shared<KBuffer::UnifromBlock>(shader, MODEL.c_str());
+				else block->bindShader(shader);
 				block->prepare(std::vector<const char*>{
 					U_POSITION.c_str(), U_ROTATION.c_str(), U_SCALE.c_str()
 				});
@@ -122,7 +131,6 @@ namespace KEngine {
 			}
 
 			virtual Ksize getCount()const = 0;
-			virtual GLenum getComponent()const = 0;
 			virtual void render(const KRenderer::Shader* shader = nullptr)const = 0;
 		};
 

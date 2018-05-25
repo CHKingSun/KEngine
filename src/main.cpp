@@ -1,7 +1,7 @@
  /**
   * just for test
   * */
- 
+
 #include <iostream>
 #include <iomanip>
 #include <string>
@@ -12,6 +12,7 @@
 #include "./Window.h"
 #include "./Object/Plane.h"
 #include "./Object/Maze.h"
+#include "./Object/Sphere.h"
 #include "./Render/Shader.h"
 #include "./Core/Matrix/Quaternion.h"
 #include "./Core/Camera/Camera.h"
@@ -159,7 +160,7 @@ void test() {
 }
 
 #endif // TEST
- 
+
  int main() {
 
 #ifdef TEST
@@ -184,21 +185,27 @@ void test() {
 
 	auto camera = new KCamera::FirstCamera(60, 1.0, 0.1, 1000);
 	auto camera2 = new KCamera::Camera(120, 1.0, 0.1, 1000);
+	//camera->setRestrictAngle(0);
 
-	auto light = new PointLight(Vec3(0, 5, 0));
+	auto light = new PointLight(Vec3(0, 0, 0));
 	auto light1 = new SpotLight(Vec3(0, 6, 0), Vec3(0, -1, 1));
-	auto light2 = new SpotLight(Vec3(0, 2, 0), Vec3(1, -3, 0));
-	light2->innerCutOff = 0.999978;
-	light2->outerCutOff = 0.999;
+	auto light2 = new SpotLight(Vec3(0, 3, 0), Vec3(1, -3, 0));
 
 	auto plane = new KEngine::KObject::Plane(30, 20, 1, 1);
 	auto plane1 = new KEngine::KObject::Plane(30, 20, 3, 2);
 	auto plane2 = new KEngine::KObject::Plane(20, 10, 2, 1);
 
-	shader->bind();
+	auto sphere = new KEngine::KObject::Sphere(10, 180, 180);
+
+	//KObject::Object3D::bindUniform(shader1);
+	//KMaterial::Material::bindUniform(shader1);
+	//KCamera::Camera::bindUniform(shader1);
+	//shader1->bind();
+
 	KObject::Object3D::bindUniform(shader);
 	KMaterial::Material::bindUniform(shader);
 	KCamera::Camera::bindUniform(shader);
+	shader->bind();
 
 	//plane->setPosition(Vec3(0, 5, -10));
 	//auto material = new KMaterial::Material(/*KMaterial::Color(0.4, 0.4, 0.4, 1.0)*/);
@@ -224,13 +231,13 @@ void test() {
 	auto maze = new KObject::Maze(w, h);
 	camera2->setPosition(Vec3(0, (w > h ? w : h) / 2.0, 0));
 	camera->setPosition(maze->getStartPosition());
-	light2->setPosition(Vec3(0, 1, 0) += camera->getPosition());
+	light2->setPosition(Vec3(0, 2, 0) += camera->getPosition());
 
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_STENCIL_TEST);
 	glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
-	glEnable(GL_CULL_FACE);
-	glCullFace(GL_BACK);
+	//glEnable(GL_CULL_FACE);
+	//glCullFace(GL_BACK);
 
 	//plane->setRenderMode(GL_FRONT_AND_BACK, GL_LINE);
 
@@ -268,7 +275,7 @@ void test() {
 	for (int i = 0; i < size; ++i) {
 		std::cout << data[i] << std::endl;
 	}
-		
+
 	delete tfbo;
 	delete backShader;
 	shader->bind();
@@ -278,13 +285,14 @@ void test() {
 	glDisable(GL_RASTERIZER_DISCARD);
 #endif // FEEDBACK
 
-	//light->bind(shader, 0);
-	//light1->bind(shader, 0);
+	light->bind(shader, 0);
+	light1->bind(shader, 0);
 	light2->bind(shader, 1);
 	Vec2 last_pos = window->getMouse();
 	Vec2 now_pos;
 	Vec2 screenSize;
 	Kboolean change_camera = false;
+	Kboolean v_key = false;
 	Kfloat speed = 0.03;
 
 #if IMGUI_ENABLE
@@ -347,7 +355,7 @@ void test() {
 			ImGui::Render();
 			ImGui_ImplGlfwGL3_RenderDrawData(ImGui::GetDrawData());
 
-			if (layout_mode) glViewport(0, 0, screenSize.x - 300, screenSize.y);
+			if (layout_mode && !movable) glViewport(0, 0, screenSize.x - 300, screenSize.y);
 			else glViewport(0, 0, screenSize.x, screenSize.y);
 #endif
 		} else {
@@ -367,7 +375,7 @@ void test() {
 			else if (window->getKeyStatus('D') || window->getKeyStatus(GLFW_KEY_RIGHT)) {
 				camera->translate(camera->getDirection(KCamera::DirectionType::RIGHT) *= Vec3(speed, 0, speed));
 			}
-			light2->setPosition(Vec3(0, 1, 0) += camera->getPosition());
+			light2->setPosition(Vec3(0, 2, 0) += camera->getPosition());
 			light2->bindPosition(shader);
 			if (last_pos != now_pos) {
 				now_pos -= last_pos;
@@ -386,15 +394,19 @@ void test() {
 		} else {
 			last_pos = now_pos;
 		}
-		if (window->getKeyStatus('V')) {
+		if (window->getKeyStatus('V') && !v_key) {
 			change_camera = !change_camera;
+			v_key = true;
+		} else {
+			v_key = false;
 		}
 		if (!change_camera) camera->bind();
 		else camera2->bind();
 
-		//light1->rotate(3, Vec3(0, 1, 0));
-		//light1->bindDirection(shader);
+		light1->rotate(1, Vec3(0, 1, 0));
+		light1->bindDirection(shader);
 
+		//sphere->render(shader);
 		maze->render(shader);
 
 		//plane->render(shader);
@@ -408,14 +420,17 @@ void test() {
 	delete plane1;
 	delete plane2;
 	delete camera;
+	delete camera2;
 	delete light;
 	delete light1;
+	delete light2;
+	delete sphere;
 	delete maze;
 	delete shader;
 	delete window;
 	KMaterial::Texture::deleteAllTextures();
 
 #endif
- 
+
 	return 0;
  }

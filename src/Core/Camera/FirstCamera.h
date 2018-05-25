@@ -18,11 +18,11 @@ namespace KEngine {
 
 		public:
 			explicit FirstCamera(const tvec3 &pos = tvec3(), Kfloat angle = 0.0): Camera(pos), restrictAngle(angle) {} //ortho
-			FirstCamera(const tvec3 &eye, const tvec3 &center, const tvec3 &up, Kfloat angle = 15.0):
+			FirstCamera(const tvec3 &eye, const tvec3 &center, const tvec3 &up, Kfloat angle = 30.0):
 				Camera(eye, center, up), restrictAngle(angle) {}
 			FirstCamera(const Kfloat &fovy, const Kfloat &aspect,
 				const Kfloat &zNear, const Kfloat &zFar,
-				const tvec3 &pos = tvec3(), Kfloat angle = 15.0):
+				const tvec3 &pos = tvec3(), Kfloat angle = 30.0):
 				Camera(fovy, aspect, zNear, zFar, pos), restrictAngle(angle) {}
 			~FirstCamera() override = default;
 
@@ -42,8 +42,8 @@ namespace KEngine {
 				const static tvec3 center(0, 0, 1);
 
 				if (!KFunction::isZero(v.y) &&
-					!(restrictAxis.getAngle(getDirection(FORWARD)) <= 45 && v.y < 0 ||
-					restrictAxis.getAngle(getDirection(BACK)) <= 45 && v.y > 0)) {
+					!(restrictAxis.getAngle(getDirection(FORWARD)) <= restrictAngle && v.y < 0 ||
+					restrictAxis.getAngle(getDirection(BACK)) <= restrictAngle && v.y > 0)) {
 					if (v.y < 0) view *= tquaternion(center.getAngle(tvec3(0, v.y, v.z)), (-view * tvec3(-1, 0, 0)) * tvec3(1, 0, 1));
 					else view *= tquaternion(center.getAngle(tvec3(0, v.y, v.z)), (-view * tvec3(1, 0, 0)) * tvec3(1, 0, 1));
 					//the following is the same as before. multipling (1, 0, 1) is to correct the dir(the y axis is always be 0).

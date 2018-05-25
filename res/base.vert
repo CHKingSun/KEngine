@@ -113,7 +113,7 @@ void calDLight(DLight l, vec3 N, vec3 E) { //N and E are normalized;
     vec3 L = normalize(-l.direction);
     float cosT = max(dot(L, N), 0.0);
     float cosA = 0.0;
-    if(cosT != 0.0) cosA = max(dot(E, reflect(-L, N)), 0.0);
+    if(cosT != 0.0) cosA = max(dot(N, normalize(L + E)), 0.0);
 
     v_ambient += l.ambient * l.factor;
     v_diffuse += l.diffuse * cosT * l.factor;
@@ -127,7 +127,7 @@ void calPLight(PLight l, vec3 N, vec3 E, vec3 m_pos) {
     vec3 L = normalize(l_dir);
     float cosT = max(dot(L, N), 0.0);
     float cosA = 0.0;
-    if(cosT != 0.0) cosA = max(dot(E, reflect(-L, N)), 0.0);
+    if(cosT != 0.0) cosA = max(dot(N, normalize(L + E)), 0.0);
 
     attenuation *= l.factor;
     v_ambient += l.ambient * attenuation;
@@ -145,7 +145,7 @@ void calSLight(SLight l, vec3 N, vec3 E, vec3 m_pos) {
     float attenuation = 1.0 / (l.kc + dis * l.kl + dis * dis * l.kq);
     float cosT = max(dot(L, N), 0.0);
     float cosA = 0.0;
-    if(cosT != 0.0) cosA = max(dot(E, reflect(-L, N)), 0.0);
+    if(cosT != 0.0) cosA = max(dot(N, normalize(L + E)), 0.0);
 
     attenuation *= l.factor * intensity;
     v_ambient += l.ambient * attenuation;

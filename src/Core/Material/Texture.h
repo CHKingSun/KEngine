@@ -16,10 +16,13 @@
 namespace KEngine {
 	namespace KMaterial {
 		enum TextureType {
-			AMBIENT = 1, DIFFUSE, SPECULAR
+			AMBIENT = 1, DIFFUSE, SPECULAR,
+			COLOR, DEPTH, STENCIL, DEPTH_AND_STENCIL
 		};
 
 		class Texture {
+			friend class KBuffer::FrameBuffer;
+
 		private:
 			Kuint id;
 			mutable Kuint activeId;
@@ -39,6 +42,10 @@ namespace KEngine {
 				path(path), type(type) {
 				if (max_num == 0) glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &max_num);
 				id = getTextureId(path);
+			}
+			Texture(TextureType type = COLOR, Ksize width = 1024, Ksize height = 1024): type(type) {
+				if (max_num == 0) glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &max_num);
+				id = getTextureId(type, width, height);
 			}
 			~Texture() {
 				//if (glIsTexture(id)) glDeleteTextures(1, &id);
@@ -101,13 +108,43 @@ namespace KEngine {
 				return tex_id;
 			}
 
+			Kuint getTextureId(TextureType type = COLOR, Ksize width = 1024, Ksize height = 1024)const {
+				Kuint tex_id;
+				glGenTextures(1, &tex_id);
+				glBindTexture(GL_TEXTURE_2D, tex_id);
+
+				GLenum format = GL_RGBA;
+				switch (type)
+				{
+				case KEngine::KMaterial::DEPTH:
+					format = GL_DEPTH_COMPONENT;
+					break;
+				case KEngine::KMaterial::STENCIL:
+					format = GL_STENCIL_INDEX;
+					break;
+				case KEngine::KMaterial::DEPTH_AND_STENCIL:
+					format = GL_DEPTH_STENCIL;
+					break;
+				default:
+					break;
+				}
+				glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_FLOAT, nullptr);
+
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+				return tex_id;
+			}
+
 			void bind(const KRenderer::Shader *shader, Kuint activeId = 0XFFFFFFFF)const {
 				if (activeId < max_num) this->activeId = activeId;
 
+				glActiveTexture(GL_TEXTURE0 + activeId);
 				glBindTexture(GL_TEXTURE_2D, id);
-				//glActiveTexture(GL_TEXTURE0 + activeId);
 				const std::string index = std::to_string(activeId);
-				shader->bindUniform1i(TEX_HEAD + index + TEX_TEXTURE, activeId);
+				shader->bindUniform1i(TEX_HEAD + index + TEX_TEXTURE, GL_TEXTURE0 + activeId);
 				shader->bindUniform1i(TEX_HEAD + index + TEX_TYPE, type);
 				shader->bindUniform1i(TEX_HEAD + index + TEX_ENABLE, 1);
 			}

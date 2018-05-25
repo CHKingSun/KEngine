@@ -68,7 +68,8 @@ namespace KEngine{
 			virtual ~Camera() = default;
 
 			static void bindUniform(const KRenderer::Shader *shader) {
-				block = std::make_shared<KBuffer::UnifromBlock>(shader, PROJECTION.c_str());
+				if (block == nullptr) block = std::make_shared<KBuffer::UnifromBlock>(shader, PROJECTION.c_str());
+				else block->bindShader(shader);
 				block->prepare(std::vector<const char*>{
 					EYE.c_str(), VIEW.c_str(), PROJ.c_str()
 				});
@@ -77,7 +78,7 @@ namespace KEngine{
 			void bind()const {
 				if (block != nullptr) {
 					block->allocate(std::vector<KBuffer::BlockData>{
-						{ EYE.c_str(), position.data() },
+						{ EYE.c_str(), (rotate * position).data() },
 						{ VIEW.c_str(), toViewMatrix().data() },
 						{ PROJ.c_str(), projection.data() }
 					});
@@ -121,7 +122,7 @@ namespace KEngine{
                 //that means once you want to add rotate to it,
                 //you should right multiply a transpose rotate matrix
                 //(rot * originView).inverse = originView.inverse * rot.inverse = view * rot.transpose
-                view *= tquaternion(angle, -v); //view *= tquaternion(angle, v).getConjugate();
+                view *= tquaternion(-angle, v); //view *= tquaternion(angle, v).getConjugate();
             }
 
             void translate(const tvec3 &v){
@@ -137,7 +138,7 @@ namespace KEngine{
 				case KEngine::KCamera::FORWARD:
 					return (-view * tvec3(0, 0, -1)).normalize();
 					//note: we at first use (0, 0, -1) as center(or (0, 0, 0) when eye position(0, 0, 1));
-					//view is a inverse rotate matrix, 
+					//view is a inverse rotate matrix,
 				case KEngine::KCamera::BACK:
 					return (-view * tvec3(0, 0, 1)).normalize();
 				case KEngine::KCamera::LEFT:

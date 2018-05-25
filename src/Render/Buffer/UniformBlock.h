@@ -6,11 +6,12 @@
 #define KENGINE_UNIFORM_BLOCK_H
 
 #include <string>
+#include <unordered_set>
 #include <vector>
 #include "../../KHeader.h"
 #include "../Shader.h"
 
-//Because for each uniform block is the same index,
+//Because for each uniform block is the same binding,
 //so it's better to make the uniform to be static;
 //share_ptr is a good choice.
 
@@ -33,24 +34,31 @@ namespace KEngine {
 
 		class UnifromBlock {
 		private:
-			Kuint index;
+			Kuint binding;
 			Kuint ubo;
 			Kuint program;
+			const char* blockName;
+			std::unordered_set<Kuint>* shaders;
 			std::vector<BlockMsg*>* blockMsgs;
 
 		public:
 			UnifromBlock(const KRenderer::Shader* shader, const char* name) :
-				program(shader->program), ubo(0), blockMsgs(nullptr) {
-				index = glGetUniformBlockIndex(program, name);
-				glUniformBlockBinding(program, index, index); //use it index as a binding point.
+				program(shader->program), ubo(0), blockMsgs(nullptr), blockName(name),
+				shaders(new std::unordered_set<Kuint>()) {
+				//remember to relink program.
+				shaders->emplace(program);
+				Kuint index = glGetUniformBlockIndex(program, name);
 				if (index == GL_INVALID_INDEX) {
 					std::cerr << "Wrong uniform block name!" << std::endl;
-				} /*else {
-					std::cout << "Uniform block name: " << name << " with index: " << index << std::endl;
-				}*/
+					program = 0;
+					return;
+				}
+				binding = index;
+				glUniformBlockBinding(program, index, binding); //use it index as a binding point.
 			}
 			~UnifromBlock() {
 				glDeleteBuffers(1, &ubo);
+				delete shaders;
 				if (blockMsgs == nullptr) return;
 				for (auto &it : *blockMsgs) {
 					delete it;
@@ -59,13 +67,29 @@ namespace KEngine {
 				delete blockMsgs;
 			}
 
-			void prepare(const std::vector<const char*>& names) {
+			void bindShader(const KRenderer::Shader* shader) {
+				//remember to relink program.
+				if (shaders->find(shader->program) != shaders->end()) {
+					program = shader->program;
+					return;
+				}
+				Kuint index = glGetUniformBlockIndex(shader->program, blockName);
 				if (index == GL_INVALID_INDEX) {
-					std::cerr << "Wrong uniform blocks index!" << std::endl;
+					std::cerr << "Wrong uniform block name!" << std::endl;
+					return;
+				}
+				program = shader->program;
+				glUniformBlockBinding(program, index, binding);
+			}
+
+			void prepare(const std::vector<const char*>& names) {
+				if (blockMsgs != nullptr) return;
+				if (binding == GL_INVALID_INDEX) {
+					std::cerr << "Wrong uniform blocks binding!" << std::endl;
 					return;
 				}
 				Kint uboSize;
-				glGetActiveUniformBlockiv(program, index, GL_UNIFORM_BLOCK_DATA_SIZE, &uboSize);
+				glGetActiveUniformBlockiv(program, binding, GL_UNIFORM_BLOCK_DATA_SIZE, &uboSize);
 				Ksize count = names.size();
 				auto indices = new Kuint[count];
 				glGetUniformIndices(program, count, names.data(), indices);
@@ -77,7 +101,6 @@ namespace KEngine {
 				glGetActiveUniformsiv(program, count, indices, GL_UNIFORM_TYPE, types);
 				glGetActiveUniformsiv(program, count, indices, GL_UNIFORM_SIZE, sizes);
 
-				if (blockMsgs != nullptr) delete blockMsgs;
 				blockMsgs = new std::vector<BlockMsg*>();
 				blockMsgs->reserve(count);
 
@@ -90,7 +113,7 @@ namespace KEngine {
 					//std::cout << names[i] << ": " << offsets[i] << ", "
 					//	<< sizes[i] << ", " << getSize(types[i]) << std::endl;
 				}
-				glBindBufferBase(GL_UNIFORM_BUFFER, index, ubo);
+				glBindBufferBase(GL_UNIFORM_BUFFER, binding, ubo);
 				glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
 				delete[] indices;
@@ -100,12 +123,13 @@ namespace KEngine {
 			}
 
 			void prepare(const std::vector<BlockData>& blocks) {
-				if (index == GL_INVALID_INDEX) {
-					std::cerr << "Wrong uniform blocks index!" << std::endl;
+				if (blockMsgs != nullptr) return;
+				if (binding == GL_INVALID_INDEX) {
+					std::cerr << "Wrong uniform blocks binding!" << std::endl;
 					return;
 				}
 				Kint uboSize;
-				glGetActiveUniformBlockiv(program, index, GL_UNIFORM_BLOCK_DATA_SIZE, &uboSize);
+				glGetActiveUniformBlockiv(program, binding, GL_UNIFORM_BLOCK_DATA_SIZE, &uboSize);
 				Ksize count = blocks.size();
 
 				const auto names = new const Kchar*[count]; //do not delete it for it not a copy
@@ -122,7 +146,6 @@ namespace KEngine {
 				glGetActiveUniformsiv(program, count, indices, GL_UNIFORM_TYPE, types);
 				glGetActiveUniformsiv(program, count, indices, GL_UNIFORM_SIZE, sizes);
 
-				if (blockMsgs != nullptr) delete blockMsgs;
 				blockMsgs = new std::vector<BlockMsg*>();
 				blockMsgs->reserve(count);
 
@@ -138,7 +161,7 @@ namespace KEngine {
 					//std::cout << names[i] << ": " << offsets[i] << ", "
 					//	<< sizes[i] << ", " << getSize(types[i]) << std::endl;
 				}
-				glBindBufferBase(GL_UNIFORM_BUFFER, index, ubo);
+				glBindBufferBase(GL_UNIFORM_BUFFER, binding, ubo);
 				glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
 				delete[] indices;
@@ -148,8 +171,8 @@ namespace KEngine {
 			}
 
 			void allocate(const BlockData& data)const {
-				if (index == GL_INVALID_INDEX) {
-					std::cerr << "Wrong uniform blocks index!" << std::endl;
+				if (binding == GL_INVALID_INDEX) {
+					std::cerr << "Wrong uniform blocks binding!" << std::endl;
 					return;
 				}
 				if (blockMsgs == nullptr) {
@@ -161,7 +184,7 @@ namespace KEngine {
 					if (it->name == data.name) {
 						glBindBuffer(GL_UNIFORM_BUFFER, ubo);
 						glBufferSubData(GL_UNIFORM_BUFFER, it->offset, it->size, data.data);
-						glBindBufferBase(GL_UNIFORM_BUFFER, index, ubo);
+						glBindBufferBase(GL_UNIFORM_BUFFER, binding, ubo);
 						glBindBuffer(GL_UNIFORM_BUFFER, 0);
 						return;
 					}
@@ -174,8 +197,8 @@ namespace KEngine {
 			}
 
 			void allocate(const std::vector<BlockData>& blocks) {
-				if (index == GL_INVALID_INDEX) {
-					std::cerr << "Wrong uniform blocks index!" << std::endl;
+				if (binding == GL_INVALID_INDEX) {
+					std::cerr << "Wrong uniform blocks binding!" << std::endl;
 					return;
 				}
 				if (blockMsgs == nullptr) {
@@ -193,7 +216,7 @@ namespace KEngine {
 					}
 				}
 
-				glBindBufferBase(GL_UNIFORM_BUFFER, index, ubo);
+				glBindBufferBase(GL_UNIFORM_BUFFER, binding, ubo);
 				glBindBuffer(GL_UNIFORM_BUFFER, 0);
 			}
 		};

@@ -21,11 +21,13 @@ namespace KEngine{
     namespace KMaterial{
 
         class Material{
-        private:
+		public:
             Color ambient;
             Color diffuse;
             Color specular;
             Kfloat shininess;
+
+		private:
             std::vector<Texture*> *textures;
 
 			static std::shared_ptr<KBuffer::UnifromBlock> block;
@@ -62,7 +64,8 @@ namespace KEngine{
             }
 
 			static void bindUniform(const KRenderer::Shader *shader) {
-				block = std::make_shared<KBuffer::UnifromBlock>(shader, MATERIAL.c_str());
+				if (block == nullptr) block = std::make_shared<KBuffer::UnifromBlock>(shader, MATERIAL.c_str());
+				else block->bindShader(shader);
 				block->prepare(std::vector<const char*>{
 					AMBIENT.c_str(), DIFFUSE.c_str(), SPECULAR.c_str(), SHININESS.c_str()
 				});
