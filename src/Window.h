@@ -96,13 +96,6 @@ namespace KEngine{
 				pause_time = 0;
 			}
 
-			void resize(Kint w, Kint h) {
-				width = w;
-				height = h;
-				//std::cout << "Window resized with " << w << ", " << h << std::endl;
-				glViewport(0, 0, width, height);
-			}
-
 			void keyEvent(Kint key, Kint action) {
 				keys[key] = action != GLFW_RELEASE;
 				if (keys[GLFW_KEY_ESCAPE]) {
@@ -144,7 +137,7 @@ namespace KEngine{
 			}
 
         public:
-            Window(const std::string &title, Kint width = 800, Kint height = 600):
+            Window(const std::string &title, Kint width = 800, Kint height = 800):
 			title(title), width(width), height(height){
                 if(!initGL()){
                     std::cerr << "Create window failed!" << std::endl;
@@ -161,7 +154,14 @@ namespace KEngine{
 #endif
                 glfwDestroyWindow(window);
                 glfwTerminate();
-            }
+			}
+
+			void resize(Kint w, Kint h) {
+				width = w;
+				height = h;
+				//std::cout << "Window resized with " << w << ", " << h << std::endl;
+				glViewport(0, 0, width, height);
+			}
 
 			bool closed()const {
 				return glfwWindowShouldClose(window) == GLFW_TRUE;

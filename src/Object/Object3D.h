@@ -125,9 +125,13 @@ namespace KEngine {
 				m_scale *= v;
 			}
 
-			inline void setRenderMode(GLenum face = GL_FRONT_AND_BACK,
-				GLenum mode = GL_FILL)const {
+			static inline void setRenderMode(GLenum face = GL_FRONT_AND_BACK,
+				GLenum mode = GL_FILL) {
 				glPolygonMode(face, mode);
+			}
+
+			const KVector::Vec3& getPosition()const {
+				return position;
 			}
 
 			virtual Ksize getCount()const = 0;

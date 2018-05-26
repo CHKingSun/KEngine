@@ -38,18 +38,19 @@ namespace KEngine {
 				indices = new std::vector<Kushort>();
 				indices->reserve(count);
 
-				Kfloat per_angle = PI * 2.0f / aslices;
-				Kfloat pery = radius / rslices;
+				Kfloat per_xangle = PI * 2.0f / aslices;
+				Kfloat per_yangle = PI / (rslices * 2.0f);
 				Kfloat pertx = 1.0f / aslices;
 				Kfloat perty = 0.5f / rslices;
-				Kfloat y = -(radius - pery); //form bottom to top(except two poles).
+				Kfloat yangle = PI - per_yangle; //form bottom to top(except two poles).
 				Kfloat ty = 1.0f - perty;
-				for (int i = 0; i < ((rslices - 1) << 1); ++i, y += pery, ty -= perty) {
-					Kfloat angle = 0; //draw a circle
+				for (int i = 0; i < ((rslices - 1) << 1); ++i, yangle -= per_yangle, ty -= perty) {
+					Kfloat y = radius * cos(yangle);
+					Kfloat r = radius * sin(yangle);
+					Kfloat xangle = 0; //draw a circle
 					Kfloat tx = 0;
-					Kfloat r = sqrt(radius * radius - y * y);
-					for (int j = 0; j <= aslices; ++j, angle += per_angle, tx += pertx) {
-						vertices->emplace_back(cos(angle) * r, y, sin(angle) * r);
+					for (int j = 0; j <= aslices; ++j, xangle += per_xangle, tx += pertx) {
+						vertices->emplace_back(cos(xangle) * r, y, sin(xangle) * r);
 						texcoords->emplace_back(tx, ty);
 					}
 				}
@@ -143,6 +144,13 @@ namespace KEngine {
 			Ksize getCount()const override {
 				return count;
 			}
+
+#ifdef IMGUI_ENABLE
+			void drawGui() {
+				ImGui::DragFloat("shininess", &material->shininess, 0.3, 0.1, 100);
+			}
+#endif // IMGUI_ENABLE
+
 		};
 	}
 }

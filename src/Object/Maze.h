@@ -217,7 +217,6 @@ namespace KEngine {
 				initArray();
 				resetMaze(w, h);
 				material = new KMaterial::Material();
-				material->shininess = 1;
 				material->addTexture(RES_PATH + "stone.png", KMaterial::DIFFUSE);
 				material->addTexture(RES_PATH + "stone.png");
 			}

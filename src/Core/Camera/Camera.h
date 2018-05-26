@@ -44,7 +44,7 @@ namespace KEngine{
 			const static std::string VIEW; //u_view
 			const static std::string PROJ; //u_proj
 
-			tmat4 toViewMatrix()const {
+			virtual tmat4 toViewMatrix()const {
 				tmat3 tmp(view.toMat3());
 				return tmat4(tmp, tmp * -position) *= (-rotate).toMat4();
 			}
@@ -78,7 +78,7 @@ namespace KEngine{
 			void bind()const {
 				if (block != nullptr) {
 					block->allocate(std::vector<KBuffer::BlockData>{
-						{ EYE.c_str(), (rotate * position).data() },
+						{ EYE.c_str(), getPosition().data() },
 						{ VIEW.c_str(), toViewMatrix().data() },
 						{ PROJ.c_str(), projection.data() }
 					});
@@ -91,7 +91,7 @@ namespace KEngine{
 			void setRotation(const Kfloat& angle, const tvec3& axis) {
 				rotate = tquaternion(angle, axis);
 			}
-            void setView(const tvec3 &eye, const tvec3 &center, const tvec3 &up){
+            virtual void setView(const tvec3 &eye, const tvec3 &center, const tvec3 &up){
                 //u-v-n is left-hand coordinate
                 const tvec3 n((center - eye).normalize());
                 const tvec3 u(tvec3::cross(n, up).normalize());
@@ -114,7 +114,7 @@ namespace KEngine{
                 projection = KFunction::frustum(left, right, bottom, top, near, far);
             }
 
-            void rotateCamera(const Kfloat &angle, const tvec3 &v){
+            void rotateCamera(const Kfloat &angle, const tvec3 &v) {
                 rotate = tquaternion(angle, v) * rotate;
             }
             void rotateView(const Kfloat &angle, const tvec3 &v){
@@ -128,27 +128,8 @@ namespace KEngine{
             void translate(const tvec3 &v){
                 position += v;
             }
-			const tvec3& getPosition()const {
-				return position;
-			}
-
-			tvec3 getDirection(DirectionType type = FORWARD)const {
-				switch (type)
-				{
-				case KEngine::KCamera::FORWARD:
-					return (-view * tvec3(0, 0, -1)).normalize();
-					//note: we at first use (0, 0, -1) as center(or (0, 0, 0) when eye position(0, 0, 1));
-					//view is a inverse rotate matrix,
-				case KEngine::KCamera::BACK:
-					return (-view * tvec3(0, 0, 1)).normalize();
-				case KEngine::KCamera::LEFT:
-					return (-view * tvec3(-1, 0, 0)).normalize();
-				case KEngine::KCamera::RIGHT:
-					return (-view * tvec3(1, 0, 0)).normalize();
-				default:
-					break;
-				}
-				return (-view * tvec3(0, 0, -1)).normalize();
+			virtual const tvec3& getPosition()const {
+				return rotate * position;
 			}
         };
 

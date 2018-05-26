@@ -129,6 +129,9 @@
     <ClInclude Include="src\Object\Sphere.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="src\Core\Camera\ThirdCamera.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp">
