@@ -1,0 +1,178 @@
+//
+// Created by KingSun on 2018/05/28
+//
+
+#ifndef KENGINE_RENDERER_H
+#define KENGINE_RENDERER_H
+
+#include "../KHeader.h"
+#include "../Window.h"
+#include "./Shader.h"
+#include "../Core/Vector/Vec3.h"
+
+namespace KEngine {
+	namespace KRenderer {
+		class Renderer {
+			using tvec2 = KVector::Vec2;
+			using tvec3 = KVector::Vec3;
+
+			friend void window_size_callback(GLFWwindow* window, int width, int height);
+			friend void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
+			friend void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
+			friend void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
+			friend static void cursor_position_callback(GLFWwindow* window, double xpos, double ypos);
+			friend void cursor_enter_callback(GLFWwindow* window, int entered);
+			friend void window_iconify_callback(GLFWwindow* window, int iconified);
+
+		protected:
+			KWindow::Window* window;
+			KRenderer::Shader* shader;
+
+			Kboolean is_active;
+			Kboolean is_focus;
+			Kboolean keys[512]; //-1, 32-162, 256-248
+			Kboolean mouse[3]; //left, right, wheel
+
+			tvec2 mouse_pos;
+
+			void initAction() {
+				glfwSetWindowSizeCallback(window->window, window_size_callback);
+				glfwSetKeyCallback(window->window, key_callback);
+				glfwSetMouseButtonCallback(window->window, mouse_button_callback);
+				glfwSetScrollCallback(window->window, scroll_callback);
+				glfwSetCursorPosCallback(window->window, cursor_position_callback);
+				glfwSetCursorEnterCallback(window->window, cursor_enter_callback);
+
+				Kdouble mx, my;
+				glfwGetCursorPos(window->window, &mx, &my);
+				mouse_pos.x = mx, mouse_pos.y = my;
+				glfwSwapInterval(1);
+				is_active = true;
+			}
+
+		protected:
+			Renderer(const std::string& v_shader, const std::string& f_shader,
+				const std::string& title, Ksize swidth = 1000, Ksize sheight = 100):
+				window(nullptr), shader(nullptr) {
+				window = new KWindow::Window(title, swidth, sheight);
+				shader = new KRenderer::Shader(v_shader, f_shader);
+				if (window->isUseful()) {
+					glfwSetWindowUserPointer(window->window, this);
+					initAction();
+				}
+			}
+
+			virtual void keyEvent(Kint key, Kint action) {
+				keys[key] = action != GLFW_RELEASE;
+				if (keys[GLFW_KEY_ESCAPE]) {
+					is_active = !is_active;
+					if (is_active) {
+						glfwSetInputMode(window->window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+					}
+					else {
+						glfwSetInputMode(window->window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+					}
+				}
+			}
+
+			virtual void mouseEvent(Kint button, Kint action) {
+				mouse[button] = action == GLFW_PRESS;
+				if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
+					//std::cout << "Pointer at: " << mx << ", " << my << std::endl;
+					//std::cout << "Run times: " << run_time << std::endl;
+					//std::cout << "Pause times: " << pause_time << std::endl;
+				}
+			}
+
+			virtual void mouseWheelEvent(Kdouble yoffset) {
+				//if(is_focus) std::cout << "Yaxis scroll: " << yoffset << std::endl;
+			}
+
+			virtual void cursorEvent(Kdouble xpos, Kdouble ypos) {
+				mouse_pos.x = xpos; mouse_pos.y = ypos;
+				//if(mouse[GLFW_MOUSE_BUTTON_LEFT]) 
+				//	std::cout << "Pointer at: " << mx << ", " << my << std::endl;
+			}
+
+			virtual void focusEvent(bool focused) {
+				is_focus = focused;
+			}
+
+			virtual void iconifiedEvent(bool iconified) {
+				is_active = is_active && !iconified;
+			}
+
+		public:
+			virtual ~Renderer() {
+				delete shader;
+				delete window;
+			}
+
+			virtual void exec() = 0;
+
+			virtual void resize(Kint w, Kint h) {
+				window->resize(w, h);
+			}
+
+			void hideMouse(Kboolean hide = true)const {
+				if (hide) {
+					glfwSetInputMode(window->window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+					//hide the mouse pointer, and also the mouse pointer will not be limited to window size.
+				} else {
+					glfwSetInputMode(window->window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+				}
+			}
+
+			const tvec2& getMouse()const {
+				return mouse_pos;
+			}
+		};
+
+
+		void window_size_callback(GLFWwindow* window, int width, int height)
+		{
+			Renderer* win = static_cast<Renderer*>(glfwGetWindowUserPointer(window));
+			if (win != nullptr) win->resize(width, height);
+			win = nullptr;
+		}
+
+		void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+			Renderer* renderer = static_cast<Renderer*>(glfwGetWindowUserPointer(window));
+			if (renderer != nullptr) renderer->keyEvent(key, action);
+			renderer = nullptr;
+		}
+
+		void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
+			Renderer* renderer = static_cast<Renderer*>(glfwGetWindowUserPointer(window));
+			if (renderer != nullptr) renderer->mouseEvent(button, action);
+			renderer = nullptr;
+		}
+
+		void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
+			Renderer* renderer = static_cast<Renderer*>(glfwGetWindowUserPointer(window));
+			if (renderer != nullptr) renderer->mouseWheelEvent(yoffset);
+			renderer = nullptr;
+		}
+
+		static void cursor_position_callback(GLFWwindow* window, double xpos, double ypos) {
+			Renderer* renderer = static_cast<Renderer*>(glfwGetWindowUserPointer(window));
+			if (renderer != nullptr) renderer->cursorEvent(xpos, ypos);
+			renderer = nullptr;
+		}
+
+		void cursor_enter_callback(GLFWwindow* window, int entered) {
+			Renderer* renderer = static_cast<Renderer*>(glfwGetWindowUserPointer(window));
+			if (renderer != nullptr) renderer->focusEvent(entered != GLFW_FALSE);
+			renderer = nullptr;
+		}
+
+		void window_iconify_callback(GLFWwindow* window, int iconified) {
+			Renderer* renderer = static_cast<Renderer*>(glfwGetWindowUserPointer(window));
+			if (renderer != nullptr) renderer->iconifiedEvent(iconified != GLFW_FALSE);
+			renderer = nullptr;
+		}
+	}
+}
+
+
+#endif // !KENGINE_RENDERER_H

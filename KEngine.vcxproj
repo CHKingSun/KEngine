@@ -190,6 +190,8 @@
     <ClInclude Include="src\Render\Buffer\UniformBlock.h" />
     <ClInclude Include="src\Render\Buffer\VertexArray.h" />
     <ClInclude Include="src\Render\Buffer\VertexBuffer.h" />
+    <ClInclude Include="src\Render\MazeRenderer.h" />
+    <ClInclude Include="src\Render\Renderer.h" />
     <ClInclude Include="src\Render\Shader.h" />
     <ClInclude Include="src\Window.h" />
   </ItemGroup>

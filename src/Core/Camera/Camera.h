@@ -128,7 +128,7 @@ namespace KEngine{
             void translate(const tvec3 &v){
                 position += v;
             }
-			virtual const tvec3& getPosition()const {
+			virtual tvec3 getPosition()const {
 				return rotate * position;
 			}
         };

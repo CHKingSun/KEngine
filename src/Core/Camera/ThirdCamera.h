@@ -28,6 +28,7 @@ namespace KEngine {
 				tmat3 rot((-rotate).toMat3());
 				tvec3 pos(0, 0, 0);
 				if (target != nullptr) pos = target->getPosition();
+				//return tmat4(vw, vw * tvec3(0, -0.1, 0) -= position) *= tmat4(rot, rot * -pos);
 				return tmat4(vw, vw * -position) *= tmat4(rot, rot * -pos);
 			}
 
@@ -87,7 +88,7 @@ namespace KEngine {
 				}
 			}
 
-			const tvec3& getPosition()const override {
+			tvec3 getPosition()const override {
 				if (target != nullptr) return target->getPosition() - (rotate * -position);
 				return rotate * position;
 			}

@@ -101,15 +101,15 @@ namespace KEngine {
 				memset(maze, 0, width * height); //sizeof(bool) = sizeof(char) = 1
 				int a; //generate entry of the maze.
 				srand(time(nullptr));
-				do { a = rand() % (width - 1); } while (!a); //do not use 0 or width-1 column as the entry.
-				entry = height * a;
+				do { a = rand() % (height - 1); } while (!a); //do not use 0 or width-1 column as the entry.
+				entry = width * a;
 				maze[entry] = true;
 				exit = 0;
 				return width * height - 1 - mazeGenerator(entry + 1);
 			}
 
-			Ksize mazeGenerator(Ksize now_pos) {
-				maze[now_pos] = true;
+			Ksize mazeGenerator(Ksize now_mouse) {
+				maze[now_mouse] = true;
 
 				int a[4] = { 0, 1, 2, 3 };//0 = right; 1 = up; 2 = left; 3 = down.
 				for (int i = 0; i < 4; i++) { //for random direction.
@@ -126,41 +126,41 @@ namespace KEngine {
 				for (int dir : a) {
 					switch (dir) {
 					case 0:
-						if (now_pos % height < height - 2 &&
-							maze[now_pos + 1] == false && //next right
-							maze[now_pos + 2] == false && //next right's right
-							maze[now_pos + height + 1] == false && //next right's up
-							maze[now_pos - height + 1] == false) //next right's down
-							count += mazeGenerator(now_pos + 1); //right can be the next step.
-						else if (now_pos % height == height - 2 && exit == 0) { //generete an exit if not exists.
-							exit = now_pos + 1;
+						if (now_mouse % width < width - 2 &&
+							maze[now_mouse + 1] == false && //next right
+							maze[now_mouse + 2] == false && //next right's right
+							maze[now_mouse + width + 1] == false && //next right's up
+							maze[now_mouse - width + 1] == false) //next right's down
+							count += mazeGenerator(now_mouse + 1); //right can be the next step.
+						else if (now_mouse % width == width - 2 && exit == 0) { //generete an exit if not exists.
+							exit = now_mouse + 1;
 							maze[exit] = true;
 							++count;
 						}
 						break;
 					case 1:
-						if (now_pos < height * (width - 2) &&
-							maze[now_pos + height] == false &&
-							maze[now_pos + height + 1] == false &&
-							maze[now_pos + 2 * height] == false &&
-							maze[now_pos + height - 1] == false)
-							count += mazeGenerator(now_pos + height);
+						if (now_mouse < width * (height - 2) &&
+							maze[now_mouse + width] == false &&
+							maze[now_mouse + width + 1] == false &&
+							maze[now_mouse + 2 * width] == false &&
+							maze[now_mouse + width - 1] == false)
+							count += mazeGenerator(now_mouse + width);
 						break;
 					case 2:
-						if (now_pos % height > 1 &&
-							maze[now_pos - 1] == false &&
-							maze[now_pos + height - 1] == false &&
-							maze[now_pos - 2] == false &&
-							maze[now_pos - height - 1] == false)
-							count += mazeGenerator(now_pos - 1);
+						if (now_mouse % width > 1 &&
+							maze[now_mouse - 1] == false &&
+							maze[now_mouse + width - 1] == false &&
+							maze[now_mouse - 2] == false &&
+							maze[now_mouse - width - 1] == false)
+							count += mazeGenerator(now_mouse - 1);
 						break;
 					case 3:
-						if (now_pos > 2 * height &&
-							maze[now_pos - height] == false &&
-							maze[now_pos - height + 1] == false &&
-							maze[now_pos - height - 1] == false &&
-							maze[now_pos - 2 * height] == false)
-							count += mazeGenerator(now_pos - height);
+						if (now_mouse > 2 * width &&
+							maze[now_mouse - width] == false &&
+							maze[now_mouse - width + 1] == false &&
+							maze[now_mouse - width - 1] == false &&
+							maze[now_mouse - 2 * width] == false)
+							count += mazeGenerator(now_mouse - width);
 						break;
 					}
 				}
@@ -242,19 +242,19 @@ namespace KEngine {
 				matrices = new std::vector<tmat4>();
 				matrices->reserve(count);
 				Kfloat px = -Kfloat(width - 1) / 2.0;
-				Kfloat py = Kfloat(height - 1) / 2.0;
+				Kfloat pz = Kfloat(height - 1) / 2.0;
 				for (int i = 0; i < height; ++i) {
 					for (int j = 0; j < width; ++j) {
-						matrices->emplace_back(KFunction::translate(KVector::Vec3(px + j, 0, py - i)).transpose());
-						if (!maze[i * height+ j]) matrices->emplace_back(KFunction::translate(
-										  KVector::Vec3(px + j, 1, py - i)).transpose());
+						matrices->emplace_back(KFunction::translate(KVector::Vec3(px + j, 0, pz - i)).transpose());
+						if (!maze[i * width + j]) matrices->emplace_back(KFunction::translate(
+										  KVector::Vec3(px + j, 1, pz - i)).transpose());
 					}
 				}
 				bindMatrices();
 			}
 
 			tvec3 getStartPosition()const {
-				return tvec3(-Kfloat(width - 1) / 2.0 + entry % height, 1, Kfloat(height - 1) / 2.0 - entry / height);
+				return tvec3(-Kfloat(width - 1) / 2.0, 1, Kfloat(height - 1) / 2.0 - entry / width);
 			}
 
 			void bind()const override {

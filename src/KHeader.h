@@ -93,15 +93,13 @@ namespace KEngine{
     namespace KCamera{
         class Camera;
 		class FirstCamera;
-    }
-
-    namespace KController{
-        class LightController;
-        class CameraController;
+		class ThirdCamera;
     }
 
     namespace KRenderer{
         class Shader;
+		class Renderer;
+		class MazeRenderer;
     }
 
 	namespace KBuffer {

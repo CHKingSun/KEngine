@@ -15,25 +15,13 @@
 
 namespace KEngine{
     namespace KWindow{
-
         class Window{
-			friend void window_size_callback(GLFWwindow* window, int width, int height);
-			friend void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
-			friend void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
-			friend void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
-			friend static void cursor_position_callback(GLFWwindow* window, double xpos, double ypos);
-			friend void cursor_enter_callback(GLFWwindow* window, int entered);
-			friend void window_iconify_callback(GLFWwindow* window, int iconified);
+			friend class KRenderer::Renderer;
 
-        private:
-            Kdouble run_time, pause_time;
-            Kuint width, height;
-			KVector::Vec2 mouse_pos;
+		private:
+			Kdouble run_time, pause_time;
+			Ksize width, height;
 			std::string title;
-            Kboolean keys[512]; //-1, 32-162, 256-248
-			Kboolean mouse[3]; //left, right, wheel
-			Kboolean is_active;
-			Kboolean is_focus;
             GLFWwindow *window;
 
             Kboolean initGL() {
@@ -49,7 +37,6 @@ namespace KEngine{
 				}
                 glfwSetWindowPos(window, 120, 120);
                 glfwMakeContextCurrent(window);
-				glfwSetWindowUserPointer(window, this);
 
 				if (glewInit() != GLEW_OK) {
 					std::cerr << "GLEW initial failed!" << std::endl;
@@ -74,78 +61,19 @@ namespace KEngine{
 #endif
 
 				std::cout << "Version: " << glGetString(GL_VERSION) << std::endl;
+				run_time = 0;
+				pause_time = 0;
 
                 return true;
             }
 
-			void initAction() {
-				glfwSetWindowSizeCallback(window, window_size_callback);
-				glfwSetKeyCallback(window, key_callback);
-				glfwSetMouseButtonCallback(window, mouse_button_callback);
-				glfwSetScrollCallback(window, scroll_callback);
-				glfwSetCursorPosCallback(window, cursor_position_callback);
-				glfwSetCursorEnterCallback(window, cursor_enter_callback);
-
-				Kdouble mx, my;
-				glfwGetCursorPos(window, &mx, &my);
-				mouse_pos.x = mx, mouse_pos.y = my;
-				glfwSwapInterval(1);
-				glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED); //hide the mouse pointer
-				is_active = true;
-				run_time = 0;
-				pause_time = 0;
-			}
-
-			void keyEvent(Kint key, Kint action) {
-				keys[key] = action != GLFW_RELEASE;
-				if (keys[GLFW_KEY_ESCAPE]) {
-					is_active = !is_active;
-					if (is_active) {
-						glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-					}
-					else {
-						glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-					}
-				}
-			}
-
-			void mouseEvent(Kint button, Kint action) {
-				mouse[button] = action == GLFW_PRESS;
-				if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
-					//std::cout << "Pointer at: " << mx << ", " << my << std::endl;
-					//std::cout << "Run times: " << run_time << std::endl;
-					//std::cout << "Pause times: " << pause_time << std::endl;
-				}
-			}
-
-			void mouseWheelEvent(Kdouble yoffset) {
-				//if(is_focus) std::cout << "Yaxis scroll: " << yoffset << std::endl;
-			}
-
-			void cursorEvent(Kdouble xpos, Kdouble ypos) {
-				mouse_pos.x = xpos; mouse_pos.y = ypos;
-				//if(mouse[GLFW_MOUSE_BUTTON_LEFT]) 
-				//	std::cout << "Pointer at: " << mx << ", " << my << std::endl;
-			}
-
-			void focusEvent(bool focused) {
-				is_focus = focused;
-			}
-
-			void iconifiedEvent(bool iconified) {
-				is_active = is_active && !iconified;
-			}
-
         public:
             Window(const std::string &title, Kint width = 800, Kint height = 800):
-			title(title), width(width), height(height){
+			title(title), width(width), height(height) {
                 if(!initGL()){
                     std::cerr << "Create window failed!" << std::endl;
-					is_active = false;
                     return;
                 }
-
-				initAction();
             }
             ~Window(){
 #if IMGUI_ENABLE
@@ -167,8 +95,8 @@ namespace KEngine{
 				return glfwWindowShouldClose(window) == GLFW_TRUE;
 			}
 
-			bool actived()const {
-				return is_active;
+			bool isUseful()const {
+				return window != nullptr;
 			}
 
 			void closeWindow()const {
@@ -184,11 +112,6 @@ namespace KEngine{
 			}
 
 			void update() {
-				if (is_active) {
-					run_time = glfwGetTime() - pause_time;
-				} else {
-					pause_time = glfwGetTime() - run_time;
-				}
 				glfwSwapBuffers(window);
 				glfwPollEvents();
 			}
@@ -202,63 +125,10 @@ namespace KEngine{
 				return run_time;
 			}
 
-			inline const KVector::Vec2& getMouse()const {
-				return mouse_pos;
-			}
-
 			inline KVector::Vec2 getWindowSize()const {
 				return KVector::Vec2(width, height);
 			}
-
-			inline Kboolean getKeyStatus(Kuint key)const {
-				if (key >= 512) return 0;
-				if (key >= 'a' && key <= 'z') key -= 26;
-				return keys[key];
-			}
         };
-
-		void window_size_callback(GLFWwindow* window, int width, int height)
-		{
-			Window* win = static_cast<Window*>(glfwGetWindowUserPointer(window));
-			if(win != nullptr) win->resize(width, height);
-			win = nullptr;
-		}
-
-		void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
-			Window* win = static_cast<Window*>(glfwGetWindowUserPointer(window));
-			if (win != nullptr) win->keyEvent(key, action);
-			win = nullptr;
-		}
-    
-		void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
-			Window* win = static_cast<Window*>(glfwGetWindowUserPointer(window));
-			if (win != nullptr) win->mouseEvent(button, action);
-			win = nullptr;
-		}
-
-		void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
-			Window* win = static_cast<Window*>(glfwGetWindowUserPointer(window));
-			if (win != nullptr) win->mouseWheelEvent(yoffset);
-			win = nullptr;
-		}
-
-		static void cursor_position_callback(GLFWwindow* window, double xpos, double ypos) {
-			Window* win = static_cast<Window*>(glfwGetWindowUserPointer(window));
-			if (win != nullptr) win->cursorEvent(xpos, ypos);
-			win = nullptr;
-		}
-	
-		void cursor_enter_callback(GLFWwindow* window, int entered) {
-			Window* win = static_cast<Window*>(glfwGetWindowUserPointer(window));
-			if (win != nullptr) win->focusEvent(entered != GLFW_FALSE);
-			win = nullptr;
-		}
-
-		void window_iconify_callback(GLFWwindow* window, int iconified) {
-			Window* win = static_cast<Window*>(glfwGetWindowUserPointer(window));
-			if (win != nullptr) win->iconifiedEvent(iconified != GLFW_FALSE);
-			win = nullptr;
-		}
 	}
 }
 

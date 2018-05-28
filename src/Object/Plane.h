@@ -52,13 +52,6 @@ namespace KEngine {
 						indices->emplace_back(t + 2, t + 3, t);
 					}
 				}
-
-				//for (auto it : *vertices) {
-				//	std::cout << it << std::endl;
-				//}
-				//for (auto it : *indices) {
-				//	std::cout << it << std::endl;
-				//}
 			}
 
 			void initArray() {
@@ -94,6 +87,7 @@ namespace KEngine {
 				indices = new std::vector<Face<Kuint>>();
 				indices->reserve(count * 2);
 				material = new KMaterial::Material();
+				material->addTexture(RES_PATH + "stone.png");
 
 				generate(width, height, xslices, yslices);
 				initArray();

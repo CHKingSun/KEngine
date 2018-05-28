@@ -96,7 +96,7 @@ namespace KEngine {
 				return -view * tvec3(0, 0, -1);
 			}
 
-			const tvec3& getPosition()const override {
+			tvec3 getPosition()const override {
 				return position;
 			}
 

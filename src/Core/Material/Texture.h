@@ -20,6 +20,13 @@ namespace KEngine {
 			COLOR, DEPTH, STENCIL, DEPTH_AND_STENCIL
 		};
 
+		struct TextureCount {
+			TextureCount(Kuint id): tex_id(id), count(1) {}
+
+			Kuint tex_id;
+			Ksize count;
+		};
+
 		class Texture {
 			friend class KBuffer::FrameBuffer;
 
@@ -30,7 +37,7 @@ namespace KEngine {
 			TextureType type;
 
 			static Kint max_num; // = 0;
-			static std::unordered_map<std::string, Kuint> texPaths;
+			static std::unordered_map<std::string, TextureCount> texPaths;
 			const static std::string TEX_HEAD; // = "u_textures[";
 			const static std::string TEX_TEXTURE; // = "].tex";
 			const static std::string TEX_TYPE; // = "].type";
@@ -43,7 +50,8 @@ namespace KEngine {
 				if (max_num == 0) glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &max_num);
 				id = getTextureId(path);
 			}
-			Texture(TextureType type = COLOR, Ksize width = 1024, Ksize height = 1024): type(type) {
+			Texture(TextureType type = COLOR, Ksize width = 1024, Ksize height = 1024):
+				type(type), path() {
 				if (max_num == 0) glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &max_num);
 				id = getTextureId(type, width, height);
 			}
@@ -53,18 +61,27 @@ namespace KEngine {
 				//so some day when you get wrong with texture, maybe here.
 				//Oh yeah I got no texture hours later.
 				//texPaths.erase(path);
-			}
-
-			static void deleteAllTextures() {
-				for (auto &it : texPaths) {
-					glDeleteTextures(1, &(it.second));
+				if (!path.empty()) {
+					auto fit = texPaths.find(path);
+					if (fit != texPaths.end()) {
+						fit->second.count -= 1;
+						if (fit->second.count == 0) {
+							if (glIsTexture(id)) glDeleteTextures(1, &id);
+							texPaths.erase(fit);
+						}
+					}
+					return;
 				}
-				texPaths.clear();
+				if (glIsTexture(id)) glDeleteTextures(1, &id);
+				return;
 			}
 
 			Kuint getTextureId(const std::string &path)const {
 				auto fit = texPaths.find(path);
-				if (fit != texPaths.end()) return fit->second;
+				if (fit != texPaths.end()) {
+					fit->second.count += 1;
+					return fit->second.tex_id;
+				}
 				GLuint tex_id;
 				glGenTextures(1, &tex_id);
 				//OpenGL 4.5 glCreateTextures(target, size, *textures);
@@ -101,7 +118,7 @@ namespace KEngine {
 					stbi_image_free(data);
 				}
 				else {
-					std::cerr << "Load texture file: " << path << "failed!" << std::endl;
+					std::cerr << "Load texture file: " << path << " failed!" << std::endl;
 					glDeleteTextures(1, &tex_id);
 				}
 				texPaths.emplace(path, tex_id);
@@ -159,7 +176,7 @@ namespace KEngine {
 		};
 
 		Kint Texture::max_num = 0;
-		std::unordered_map<std::string, Kuint> Texture::texPaths = std::unordered_map<std::string, Kuint>();
+		std::unordered_map<std::string, TextureCount> Texture::texPaths = std::unordered_map<std::string, TextureCount>();
 		const std::string Texture::TEX_HEAD("u_textures[");
 		const std::string Texture::TEX_TEXTURE("].tex");
 		const std::string Texture::TEX_TYPE("].type");
