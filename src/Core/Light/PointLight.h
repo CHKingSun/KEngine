@@ -49,24 +49,42 @@ namespace KEngine{
                     diffuse(diffuse), specular(specular),
                     shadowFactor(shadowFactor), kc(kc), kl(kl), kq(kq){}
 
-			void bind(const KRenderer::Shader* shader, Kuint id = 0XFFFFFFFF)const override {
+			void bind(Kuint id = 0XFFFFFFFF)const override {
 				if (id < MAX_LIGHTS_NUM) activeId = id;
 
+				if (block == nullptr) return;
+				Kboolean enable = true;
 				const std::string index = std::to_string(activeId);
-				shader->bindUniform1i(PLIGHT + index + U_ENABLE, enable);
-				shader->bindUniform1f(PLIGHT + index + U_FACTOR, factor);
-				shader->bindUniform1f(PLIGHT + index + U_SHADOWFACTOR, shadowFactor);
-				shader->bindUniform3f(PLIGHT + index + U_POSITION, position);
-				shader->bindUniform4f(PLIGHT + index + U_AMBIENT, ambient);
-				shader->bindUniform4f(PLIGHT + index + U_DIFFUSE, diffuse);
-				shader->bindUniform4f(PLIGHT + index + U_SPECULAR, specular);
-				shader->bindUniform1f(PLIGHT + index + U_KC, kc);
-				shader->bindUniform1f(PLIGHT + index + U_KL, kl);
-				shader->bindUniform1f(PLIGHT + index + U_KQ, kq);
+				if (preparedIndex->find(PLIGHT + index) == preparedIndex->end()) {
+					preparedIndex->emplace(PLIGHT + index);
+					block->prepare(std::vector<KBuffer::BlockData>{
+						{ (PLIGHT + index + U_ENABLE).c_str(), &enable },
+						{ (PLIGHT + index + U_FACTOR).c_str(), &factor },
+						{ (PLIGHT + index + U_SHADOWFACTOR).c_str(), &shadowFactor },
+						{ (PLIGHT + index + U_POSITION).c_str(), position.data() },
+						{ (PLIGHT + index + U_AMBIENT).c_str(), ambient.data() },
+						{ (PLIGHT + index + U_DIFFUSE).c_str(), diffuse.data() },
+						{ (PLIGHT + index + U_SPECULAR).c_str(), specular.data() },
+						{ (PLIGHT + index + U_KC).c_str(), &kc },
+						{ (PLIGHT + index + U_KL).c_str(), &kl },
+						{ (PLIGHT + index + U_KQ).c_str(), &kq }
+					}, true);
+				}
+				else {
+					block->allocate(std::vector<KBuffer::BlockData>{
+						{ (PLIGHT + index + U_ENABLE).c_str(), &enable },
+						{ (PLIGHT + index + U_FACTOR).c_str(), &factor },
+						{ (PLIGHT + index + U_SHADOWFACTOR).c_str(), &shadowFactor },
+						{ (PLIGHT + index + U_POSITION).c_str(), position.data() },
+						{ (PLIGHT + index + U_AMBIENT).c_str(), ambient.data() },
+						{ (PLIGHT + index + U_DIFFUSE).c_str(), diffuse.data() },
+						{ (PLIGHT + index + U_SPECULAR).c_str(), specular.data() }
+					});
+				}
 			}
 
-			void bindPosition(const KRenderer::Shader* shader)const override {
-				shader->bindUniform3f(PLIGHT + std::to_string(activeId) + U_POSITION, position);
+			void bindPosition()const override {
+				if(block != nullptr) block->allocate({ (PLIGHT + std::to_string(activeId) + U_POSITION).c_str(), position.data() });
 			}
 
             void translate(const tvec3 &v){

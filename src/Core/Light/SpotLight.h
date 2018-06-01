@@ -70,31 +70,55 @@ namespace KEngine{
                     innerCutOff(inner), outerCutOff(outer), shadowFactor(shadowFactor),
                     kc(kc), kl(kl), kq(kq){}
 
-			void bind(const KRenderer::Shader* shader, Kuint id = 0XFFFFFFFF)const override {
+			void bind(Kuint id = 0XFFFFFFFF)const override {
 				if (id < MAX_LIGHTS_NUM) activeId = id;
 
+				if (block == nullptr) return;
+				Kboolean enable = true;
 				const std::string index = std::to_string(activeId);
-				shader->bindUniform1i(SLIGHT + index + U_ENABLE, enable);
-				shader->bindUniform1f(SLIGHT + index + U_FACTOR, factor);
-				shader->bindUniform1f(SLIGHT + index + U_SHADOWFACTOR, shadowFactor);
-				shader->bindUniform3f(SLIGHT + index + U_POSITION, position);
-				shader->bindUniform3f(SLIGHT + index + U_DIRECTION, direction);
-				shader->bindUniform4f(SLIGHT + index + U_AMBIENT, ambient);
-				shader->bindUniform4f(SLIGHT + index + U_DIFFUSE, diffuse);
-				shader->bindUniform4f(SLIGHT + index + U_SPECULAR, specular);
-				shader->bindUniform1f(SLIGHT + index + U_KC, kc);
-				shader->bindUniform1f(SLIGHT + index + U_KL, kl);
-				shader->bindUniform1f(SLIGHT + index + U_KQ, kq);
-				shader->bindUniform1f(SLIGHT + index + U_INNERCUTOFF, innerCutOff);
-				shader->bindUniform1f(SLIGHT + index + U_OUTERCUTOFF, outerCutOff);
+				if (preparedIndex->find(SLIGHT + index) == preparedIndex->end()) {
+					preparedIndex->emplace(SLIGHT + index);
+					block->prepare(std::vector<KBuffer::BlockData>{
+						{ (SLIGHT + index + U_ENABLE).c_str(), &enable },
+						{ (SLIGHT + index + U_FACTOR).c_str(), &factor },
+						{ (SLIGHT + index + U_SHADOWFACTOR).c_str(), &shadowFactor },
+						{ (SLIGHT + index + U_DIRECTION).c_str(), direction.data() },
+						{ (SLIGHT + index + U_POSITION).c_str(), position.data() },
+						{ (SLIGHT + index + U_AMBIENT).c_str(), ambient.data() },
+						{ (SLIGHT + index + U_DIFFUSE).c_str(), diffuse.data() },
+						{ (SLIGHT + index + U_SPECULAR).c_str(), specular.data() },
+						{ (SLIGHT + index + U_KC).c_str(), &kc },
+						{ (SLIGHT + index + U_KL).c_str(), &kl },
+						{ (SLIGHT + index + U_KQ).c_str(), &kq },
+						{ (SLIGHT + index + U_INNERCUTOFF).c_str(), &innerCutOff },
+						{ (SLIGHT + index + U_OUTERCUTOFF).c_str(), &outerCutOff }
+					}, true);
+				}
+				else {
+					block->allocate(std::vector<KBuffer::BlockData>{
+						{ (SLIGHT + index + U_ENABLE).c_str(), &enable },
+						{ (SLIGHT + index + U_FACTOR).c_str(), &factor },
+						{ (SLIGHT + index + U_SHADOWFACTOR).c_str(), &shadowFactor },
+						{ (SLIGHT + index + U_DIRECTION).c_str(), direction.data() },
+						{ (SLIGHT + index + U_POSITION).c_str(), position.data() },
+						{ (SLIGHT + index + U_AMBIENT).c_str(), ambient.data() },
+						{ (SLIGHT + index + U_DIFFUSE).c_str(), diffuse.data() },
+						{ (SLIGHT + index + U_SPECULAR).c_str(), specular.data() },
+						{ (SLIGHT + index + U_KC).c_str(), &kc },
+						{ (SLIGHT + index + U_KL).c_str(), &kl },
+						{ (SLIGHT + index + U_KQ).c_str(), &kq },
+						{ (SLIGHT + index + U_INNERCUTOFF).c_str(), &innerCutOff },
+						{ (SLIGHT + index + U_OUTERCUTOFF).c_str(), &outerCutOff }
+					});
+				}
 			}
 
-			void bindPosition(const KRenderer::Shader* shader)const override {
-				shader->bindUniform3f(SLIGHT + std::to_string(activeId) + U_POSITION, position);
+			void bindPosition()const override {
+				if (block != nullptr) block->allocate({ (SLIGHT + std::to_string(activeId) + U_POSITION).c_str(), position.data() });
 			}
 
-			void bindDirection(const KRenderer::Shader* shader)const override {
-				shader->bindUniform3f(SLIGHT + std::to_string(activeId) + U_DIRECTION, direction);
+			void bindDirection()const override {
+				if (block != nullptr) block->allocate({ (SLIGHT + std::to_string(activeId) + U_DIRECTION).c_str(), direction.data() });
 			}
 
             void rotate(const Kfloat &angle, const tvec3 &v){

@@ -87,7 +87,7 @@ namespace KEngine {
 				indices = new std::vector<Face<Kuint>>();
 				indices->reserve(count * 2);
 				material = new KMaterial::Material();
-				material->addTexture(RES_PATH + "stone.png");
+				//material->addTexture(RES_PATH + "stone.png");
 
 				generate(width, height, xslices, yslices);
 				initArray();
@@ -120,36 +120,35 @@ namespace KEngine {
 				if(material != nullptr) material->bind();
 			}
 
-			void bindTextures(const KRenderer::Shader* shader)const {
-				if (shader == nullptr || material == nullptr) return;
-				material->bindTextures(shader);
+			void unBind()const override {
+				Object3D::unBind();
+				if (material != nullptr) material->activeTextures(false);
 			}
 
-			void unBindTextures(const KRenderer::Shader* shader)const {
-				if (shader == nullptr || material == nullptr) return;
-				material->unactiveTextures(shader);
-			}
-
-			void render(const KRenderer::Shader* shader = nullptr)const override {
+			void render(const KRenderer::Shader* shader = nullptr,
+				const KRenderer::Shader* contourShader = nullptr)const override {
 				//if you don't have textures or other uniforms to bind,
 				//just leave the shader nullptr.
 				bind();
-				bindTextures(shader);
 
-				glClear(GL_STENCIL_BUFFER_BIT);
-				glStencilFunc(GL_GEQUAL, 1, 0XFFFFFFFF);
-				glStencilOp(GL_KEEP, GL_ZERO, GL_REPLACE);
+				if (contourShader != nullptr) {
+					glStencilFunc(GL_ALWAYS, 1, 0xFF);
+					glStencilMask(0xFF);
+				}
 				glDrawElements(GL_TRIANGLES, count * 6, GL_UNSIGNED_INT, nullptr);
 
-				shader->bindUniform1i("u_draw_contour", true);
-				glLineWidth(3.0);
-				glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-				glStencilFunc(GL_EQUAL, 0, 0XFFFFFFFF);
-				glDrawElements(GL_TRIANGLES, count * 6, GL_UNSIGNED_INT, nullptr);
-				glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-				shader->bindUniform1i("u_draw_contour", false);
+				if (contourShader != nullptr) {
+					contourShader->bind();
+					glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+					glStencilMask(0x00);
+					glLineWidth(3.0);
+					glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+					glDrawElements(GL_TRIANGLES, count * 6, GL_UNSIGNED_INT, nullptr);
+					glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+					glStencilMask(0xFF);
+					shader->bind();
+				}
 
-				unBindTextures(shader);
 				unBind();
 			}
 

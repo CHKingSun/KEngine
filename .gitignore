@@ -8,3 +8,4 @@ imgui.ini
 *.user
 *.opendb
 .vs
+.vscode

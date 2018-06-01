@@ -2,7 +2,6 @@
 
 //in blocks is not allowed in vertex shader
 layout(location = 1) in vec3 a_position;
-layout(location = 2) in vec3 a_normal;
 layout(location = 3) in vec2 a_texcoord;
 layout(location = 4) in mat4 a_matrix; //multiple render, it will use 4 locations to save, must be column major
 
@@ -23,16 +22,6 @@ layout(std140, row_major) uniform projection {
     mat4 u_proj;
 };
 
-out feedback{
-    mat4 b_out;
-    vec3 b_pos;
-    vec3 b_scale;
-    mat3 b_rotate;
-};
-
-out vec3 v_N;
-out vec3 v_E;
-out vec3 v_mPos;
 out vec2 v_texcoord;
 
 void main() {
@@ -42,14 +31,5 @@ void main() {
     else m_pos = u_mPos + (u_mRotate * (u_mScale * (a_matrix * vec4(a_position, 1.0)).xyz));
     gl_Position = u_proj * (u_view * vec4(m_pos, 1.0));
 
-    if(a_normal == vec3(0.0f)) v_N = a_normal;
-    else if(!u_is_multiple) v_N = normalize(u_mRotate * (u_mScale * a_normal));
-    else v_N = normalize(u_mRotate * (u_mScale * (a_matrix * vec4(a_normal, 0.0)).xyz));
-    v_E = normalize(p_eye - m_pos);
-    v_mPos = m_pos;
     v_texcoord = a_texcoord;
-
-    b_pos = a_normal;
-    b_scale = u_mScale;
-    b_rotate = u_mRotate;
 }

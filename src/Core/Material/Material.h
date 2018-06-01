@@ -64,11 +64,14 @@ namespace KEngine{
             }
 
 			static void bindUniform(const KRenderer::Shader *shader) {
-				if (block == nullptr) block = std::make_shared<KBuffer::UnifromBlock>(shader, MATERIAL.c_str());
+				if (block == nullptr) {
+					block = std::make_shared<KBuffer::UnifromBlock>(shader, MATERIAL.c_str());
+					block->prepare(std::vector<const char*>{
+						AMBIENT.c_str(), DIFFUSE.c_str(), SPECULAR.c_str(), SHININESS.c_str()
+					});
+				}
 				else block->bindShader(shader);
-				block->prepare(std::vector<const char*>{
-					AMBIENT.c_str(), DIFFUSE.c_str(), SPECULAR.c_str(), SHININESS.c_str()
-				});
+				Texture::bindUniform(shader);
 			}
 
             void bind()const {
@@ -80,31 +83,20 @@ namespace KEngine{
 						{ SHININESS.c_str(), &shininess }
 					});
 				}
-            }
-
-			void bindTextures(const KRenderer::Shader *shader)const {
 				if (textures != nullptr) {
 					int i = 0;
 					for (auto &it : *textures) {
-						it->bind(shader, i++); 
+						it->bind(i++);
 						//note: use ++i maybe you will got some different answer.
 						//Maybe it's related to glActiveTexture();
 					}
 				}
-			}
+            }
 
-			void activeTextures(const KRenderer::Shader *shader)const {
+			void activeTextures(Kboolean enable = true)const {
 				if (textures != nullptr) {
 					for (auto &it : *textures) {
-						it->active(shader);
-					}
-				}
-			}
-
-			void unactiveTextures(const KRenderer::Shader *shader)const {
-				if (textures != nullptr) {
-					for (auto &it : *textures) {
-						it->unActive(shader);
+						it->active(enable);
 					}
 				}
 			}

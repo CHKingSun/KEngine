@@ -8,7 +8,7 @@ struct Texture {
 
 const int MAX_TEXTURE_NUM = 12;
 
-struct ALight{ //Ambient light
+struct ALight { //Ambient light
     bool enable;
 
     float factor;
@@ -16,7 +16,7 @@ struct ALight{ //Ambient light
     vec4 ambient;
 };
 
-struct DLight{ //Direction light
+struct DLight { //Direction light
     bool enable;
 
     float factor;
@@ -29,7 +29,7 @@ struct DLight{ //Direction light
     vec4 specular;
 };
 
-struct PLight{ //Point Light
+struct PLight { //Point Light
     bool enable;
 
     float factor;
@@ -44,7 +44,7 @@ struct PLight{ //Point Light
     float kc, kl, kq;
 };
 
-struct SLight{ //Spot Light
+struct SLight { //Spot Light
     bool enable;
 
     float factor;
@@ -63,22 +63,12 @@ struct SLight{ //Spot Light
 
 const int MAX_LIGHTS_NUM = 4;
 
-vec4 v_ambient = vec4(0.0f);
-vec4 v_diffuse = vec4(0.0f);
-vec4 v_specular = vec4(0.0f);
-
-layout(std140) uniform material{
-    float u_shininess;
-    vec4 u_ambient;
-    vec4 u_diffuse;
-    vec4 u_specular;
-};
-
-void calALight(ALight l) {
+void calALight(ALight l, inout vec4 v_ambient) {
     v_ambient += l.ambient * l.factor;
 }
 
-void calDLight(DLight l, vec3 N, vec3 E) { //N and E are normalized;
+void calDLight(DLight l, vec3 N, vec3 E, float u_shininess,
+    inout vec4 v_ambient, inout vec4 v_diffuse, inout vec4 v_specular) { //N and E are normalized;
     vec3 L = normalize(-l.direction);
     float cosT = max(dot(L, N), 0.0);
     float cosA = 0.0;
@@ -89,7 +79,8 @@ void calDLight(DLight l, vec3 N, vec3 E) { //N and E are normalized;
     v_specular += l.specular * pow(cosA, u_shininess) * l.factor;
 }
 
-void calPLight(PLight l, vec3 N, vec3 E, vec3 m_pos) {
+void calPLight(PLight l, vec3 N, vec3 E, vec3 m_pos, float u_shininess,
+    inout vec4 v_ambient, inout vec4 v_diffuse, inout vec4 v_specular) {
     vec3 l_dir = l.position - m_pos;
     float dis = length(l_dir);
     float attenuation = 1.0 / (l.kc + dis * l.kl + dis * dis * l.kq);
@@ -103,7 +94,8 @@ void calPLight(PLight l, vec3 N, vec3 E, vec3 m_pos) {
     v_specular += l.specular * pow(cosA, u_shininess) * attenuation;
 }
 
-void calSLight(SLight l, vec3 N, vec3 E, vec3 m_pos) {
+void calSLight(SLight l, vec3 N, vec3 E, vec3 m_pos, float u_shininess,
+    inout vec4 v_ambient, inout vec4 v_diffuse, inout vec4 v_specular) {
     vec3 l_dir = l.position - m_pos;
     float dis = length(l_dir);
 
@@ -125,23 +117,25 @@ in vec3 v_E;
 in vec3 v_mPos;
 in vec2 v_texcoord;
 
-uniform bool u_draw_contour;
+layout(std140) uniform material {
+    float u_shininess;
+    vec4 u_ambient;
+    vec4 u_diffuse;
+    vec4 u_specular;
+};
+
+layout(std140) uniform lights {
+    ALight u_aLights[MAX_LIGHTS_NUM];
+    PLight u_pLights[MAX_LIGHTS_NUM];
+    DLight u_dLights[MAX_LIGHTS_NUM];
+    SLight u_sLights[MAX_LIGHTS_NUM];
+};
 
 uniform Texture u_textures[MAX_TEXTURE_NUM];
-
-uniform ALight u_aLights[MAX_LIGHTS_NUM];
-uniform PLight u_pLights[MAX_LIGHTS_NUM];
-uniform DLight u_dLights[MAX_LIGHTS_NUM];
-uniform SLight u_sLights[MAX_LIGHTS_NUM];
 
 out vec4 fragColor;
 
 void main() {
-    if(u_draw_contour) {
-        fragColor = vec4(0.0, 0.67, 0.56, 1.0);
-        return;
-    }
-
     vec4 ambient = vec4(0.0f);
     vec4 diffuse = vec4(0.0f);
     vec4 specular = vec4(0.0f);
@@ -169,32 +163,35 @@ void main() {
     if(flag[2]) specular *= u_specular;
     else specular = u_specular * vec4(0.3, 0.3, 0.3, 1.0);
 
+    vec4 v_ambient = vec4(0.0f);
+    vec4 v_diffuse = vec4(0.0f);
+    vec4 v_specular = vec4(0.0f);
     flag[0] = false;
     flag[1] = false;
     if(v_N == vec3(0.0f)) { //no normals
         for(int i = 0; i < MAX_LIGHTS_NUM; ++i) {
             if(u_aLights[i].enable) {
                 flag[0] = true;
-                calALight(u_aLights[i]);
+                calALight(u_aLights[i], v_ambient);
             }
         }
     } else {
         for(int i = 0; i < MAX_LIGHTS_NUM; ++i) {
             if(u_aLights[i].enable) {
                 flag[0] = true;
-                calALight(u_aLights[i]);
+                calALight(u_aLights[i], v_ambient);
             }
             if(u_dLights[i].enable) {
                 flag[1] = true;
-                calDLight(u_dLights[i], v_N, v_E);
+                calDLight(u_dLights[i], v_N, v_E, u_shininess, v_ambient, v_diffuse, v_specular);
             }
             if(u_pLights[i].enable) {
                 flag[1] = true;
-                calPLight(u_pLights[i], v_N, v_E, v_mPos);
+                calPLight(u_pLights[i], v_N, v_E, v_mPos, u_shininess, v_ambient, v_diffuse, v_specular);
             }
             if(u_sLights[i].enable) {
                 flag[1] = true;
-                calSLight(u_sLights[i], v_N, v_E, v_mPos);
+                calSLight(u_sLights[i], v_N, v_E, v_mPos, u_shininess, v_ambient, v_diffuse, v_specular);
             }
         }
     }

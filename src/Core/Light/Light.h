@@ -7,8 +7,11 @@
 
 #include <ostream>
 #include <string>
+#include <memory>
+#include <unordered_set>
 #include "../../KHeader.h"
 #include "../../Render/Shader.h"
+#include "../../Render/Buffer/UniformBlock.h"
 #include "../Vector/Vec3.h"
 #include "../Material/Color.h"
 
@@ -23,6 +26,8 @@ namespace KEngine{
 		protected:
             mutable Kuint activeId;
             LightType type;
+
+			const static std::string LIGHTS;
 
 			const static std::string ALIGHT; //ambient light u_aLights
 			const static std::string PLIGHT; //point light u_pLights
@@ -45,41 +50,65 @@ namespace KEngine{
 
 			const static Kuint MAX_LIGHTS_NUM;
 
+			static std::shared_ptr<KBuffer::UnifromBlock> block;
+			static std::shared_ptr<std::unordered_set<std::string>> preparedIndex;
+
         public:
             using tcolor = KMaterial::Color;
-
-            bool enable;
 
             Kfloat factor; //Light intensity
 
             tcolor ambient;
 
-            Light(LightType type = AMBIENT): enable(true), type(type), activeId(0),
+            Light(LightType type = AMBIENT): type(type), activeId(0),
                  factor(1.0), ambient(KMaterial::GREY){};
             Light(const tcolor &ambient, LightType type = AMBIENT): activeId(0),
-                    enable(true), type(type), factor(1.0), ambient(ambient){};
+                    type(type), factor(1.0), ambient(ambient){};
             Light(const tcolor &ambient, const Kfloat &factor, LightType type = AMBIENT):
-                    enable(true), type(type), activeId(0), factor(factor), ambient(ambient){};
+                    type(type), activeId(0), factor(factor), ambient(ambient){};
 
-			virtual void bind(const KRenderer::Shader* shader, Kuint id = 0XFFFFFFFF)const {
-				if (id < MAX_LIGHTS_NUM) activeId = id;
-
-				const std::string index = std::to_string(activeId);
-				shader->bindUniform1i(ALIGHT + index + U_ENABLE, enable);
-				shader->bindUniform1f(ALIGHT + index + U_FACTOR, factor);
-				shader->bindUniform4f(ALIGHT + index + U_AMBIENT, ambient);
+			static void bindUniform(const KRenderer::Shader* shader) {
+				if (block == nullptr) {
+					block = std::make_shared<KBuffer::UnifromBlock>(shader, LIGHTS.c_str());
+					preparedIndex = std::make_shared<std::unordered_set<std::string>>();
+				}
+				else block->bindShader(shader);
 			}
 
-			virtual void bindPosition(const const KRenderer::Shader* shader)const {
+			virtual void bind(Kuint id = 0XFFFFFFFF)const {
+				if (id < MAX_LIGHTS_NUM) activeId = id;
+
+				if (block == nullptr) return;
+				Kboolean enable = true;
+				const std::string index = std::to_string(activeId);
+				if (preparedIndex->find(ALIGHT + index) == preparedIndex->end()) {
+					preparedIndex->emplace(ALIGHT + index);
+					block->prepare(std::vector<KBuffer::BlockData>{
+						{ (ALIGHT + index + U_ENABLE).c_str(), &enable },
+						{ (ALIGHT + index + U_FACTOR).c_str(), &factor },
+						{ (ALIGHT + index + U_AMBIENT).c_str(), ambient.data() }
+					}, true);
+				}
+				else {
+					block->allocate(std::vector<KBuffer::BlockData>{
+						{ (ALIGHT + index + U_ENABLE).c_str(), &enable },
+						{ (ALIGHT + index + U_FACTOR).c_str(), &factor },
+						{ (ALIGHT + index + U_AMBIENT).c_str(), ambient.data() }
+					});
+				}
+			}
+
+			virtual void bindPosition()const {
 				//Do nothing in Light and Direction class.
 			}
 
-			virtual void bindDirection(const const KRenderer::Shader* shader)const {
+			virtual void bindDirection()const {
 				//Do nothing in Light and Position class.
 			}
 
-			void active(const KRenderer::Shader* shader)const {
+			void active(Kboolean enable = true)const {
 				//Maybe it's better to be a virtual function
+				if (block == nullptr) return;
 				std::string name;
 				switch (type) {
 				case KEngine::KLight::AMBIENT:
@@ -97,28 +126,7 @@ namespace KEngine{
 				default:
 					break;
 				}
-				shader->bindUniform1i(name, 1);
-			}
-
-			void unActive(const KRenderer::Shader* shader)const {
-				std::string name;
-				switch (type) {
-				case KEngine::KLight::AMBIENT:
-					name = ALIGHT + std::to_string(activeId) + U_ENABLE;
-					break;
-				case KEngine::KLight::POINT:
-					name = PLIGHT + std::to_string(activeId) + U_ENABLE;
-					break;
-				case KEngine::KLight::DIRECTION:
-					name = DLIGHT + std::to_string(activeId) + U_ENABLE;
-					break;
-				case KEngine::KLight::SPOT:
-					name = SLIGHT + std::to_string(activeId) + U_ENABLE;
-					break;
-				default:
-					break;
-				}
-				shader->bindUniform1i(name, 0);
+				block->allocate({ name.c_str(), &enable });
 			}
 
             friend std::ostream& operator<<(std::ostream &os, const Light &light);
@@ -145,6 +153,8 @@ namespace KEngine{
 
 		const Kuint Light::MAX_LIGHTS_NUM = 4;
 
+		const std::string Light::LIGHTS = "lights";
+
 		const std::string Light::ALIGHT = "u_aLights[";
 		const std::string Light::PLIGHT = "u_pLights[";
 		const std::string Light::DLIGHT = "u_dLights[";
@@ -163,6 +173,9 @@ namespace KEngine{
 		const std::string Light::U_KQ = "].kq";
 		const std::string Light::U_INNERCUTOFF = "].innerCutOff";
 		const std::string Light::U_OUTERCUTOFF = "].outerCutOff";
+
+		std::shared_ptr<KBuffer::UnifromBlock> Light::block(nullptr);
+		std::shared_ptr<std::unordered_set<std::string>> Light::preparedIndex(nullptr);
     }
 }
 

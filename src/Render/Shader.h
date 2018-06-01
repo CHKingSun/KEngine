@@ -27,12 +27,13 @@ namespace KEngine{
 		case GL_FLOAT_VEC3: return sizeof(GLfloat) * 3;
 		case GL_FLOAT_VEC4: return sizeof(GLfloat) * 4;
 		case GL_FLOAT_MAT3: return sizeof(GLfloat) * 12;
-		//When we use mat3, it will devide into 3 vec3,
+		//When we use mat3, it will divide into 3 vec3,
 		//but when GLSL read the buffer of vec3, it will read 4 value and discard the last value,
 		//thus, be sure to push mat4x3(3 vec4) data into the buffer or you may get what you don't want.
 		case GL_FLOAT_MAT4: return sizeof(GLfloat) * 16;
 		case GL_FLOAT_MAT2: return sizeof(GLfloat) * 4;
 		case GL_FLOAT_VEC2: return sizeof(GLfloat) * 2;
+		case GL_BOOL: return sizeof(GLboolean);
 		case GL_INT: return sizeof(GLint);
 		case GL_SHORT: return sizeof(GLshort);
 		case GL_BYTE: return sizeof(GLbyte);

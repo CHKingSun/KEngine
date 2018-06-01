@@ -40,21 +40,39 @@ namespace KEngine{
                     Light(ambient, factor, DIRECTION), direction(dir),
                     diffuse(diffuse), specular(specular), shadowFactor(shadowFactor){}
 
-			void bind(const KRenderer::Shader* shader, Kuint id = 0XFFFFFFFF)const override {
+			void bind(Kuint id = 0XFFFFFFFF)const override {
 				if (id < MAX_LIGHTS_NUM) activeId = id;
 
+				if (block == nullptr) return;
+				Kboolean enable = true;
 				const std::string index = std::to_string(activeId);
-				shader->bindUniform1i(DLIGHT + index + U_ENABLE, enable);
-				shader->bindUniform1f(DLIGHT + index + U_FACTOR, factor);
-				shader->bindUniform1f(DLIGHT + index + U_SHADOWFACTOR, shadowFactor);
-				shader->bindUniform3f(DLIGHT + index + U_DIRECTION, direction);
-				shader->bindUniform4f(DLIGHT + index + U_AMBIENT, ambient);
-				shader->bindUniform4f(DLIGHT + index + U_DIFFUSE, diffuse);
-				shader->bindUniform4f(DLIGHT + index + U_SPECULAR, specular);
+				if (preparedIndex->find(DLIGHT + index) == preparedIndex->end()) {
+					preparedIndex->emplace(DLIGHT + index);
+					block->prepare(std::vector<KBuffer::BlockData>{
+						{ (DLIGHT + index + U_ENABLE).c_str(), &enable },
+						{ (DLIGHT + index + U_FACTOR).c_str(), &factor },
+						{ (DLIGHT + index + U_SHADOWFACTOR).c_str(), &shadowFactor },
+						{ (DLIGHT + index + U_DIRECTION).c_str(), direction.data() },
+						{ (DLIGHT + index + U_AMBIENT).c_str(), ambient.data() },
+						{ (DLIGHT + index + U_DIFFUSE).c_str(), diffuse.data() },
+						{ (DLIGHT + index + U_SPECULAR).c_str(), specular.data() }
+					}, true);
+				}
+				else {
+					block->allocate(std::vector<KBuffer::BlockData>{
+						{ (DLIGHT + index + U_ENABLE).c_str(), &enable },
+						{ (DLIGHT + index + U_FACTOR).c_str(), &factor },
+						{ (DLIGHT + index + U_SHADOWFACTOR).c_str(), &shadowFactor },
+						{ (DLIGHT + index + U_DIRECTION).c_str(), direction.data() },
+						{ (DLIGHT + index + U_AMBIENT).c_str(), ambient.data() },
+						{ (DLIGHT + index + U_DIFFUSE).c_str(), diffuse.data() },
+						{ (DLIGHT + index + U_SPECULAR).c_str(), specular.data() }
+					});
+				}
 			}
 
-			void bindDirection(const KRenderer::Shader* shader)const override {
-				shader->bindUniform3f(DLIGHT + std::to_string(activeId) + U_DIRECTION, direction);
+			void bindDirection()const override {
+				if(block != nullptr) block->allocate({ (DLIGHT + std::to_string(activeId) + U_DIRECTION).c_str(), direction.data() });
 			}
 
             void rotate(const Kfloat &angle, const tvec3 &v){

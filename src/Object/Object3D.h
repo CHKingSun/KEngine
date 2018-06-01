@@ -18,7 +18,7 @@
 #include "../Render/Buffer/VertexBuffer.h"
 #include "../Render/Buffer/UniformBlock.h"
 
-//Maybe later we beed a AABB box or Sphere box and then we need it center
+//Maybe later we need a AABB box or Sphere box and then we need it center
 //Maybe need parent Object3D
 
 namespace KEngine {
@@ -37,6 +37,7 @@ namespace KEngine {
 			KBuffer::VertexBuffer* nbo;
 
 			std::string type;
+			Kboolean is_multiple;
 
 			static std::shared_ptr<KBuffer::UnifromBlock> block;
 
@@ -44,6 +45,7 @@ namespace KEngine {
 			const static std::string U_POSITION; //u_mPos
 			const static std::string U_ROTATION; //u_mRotate
 			const static std::string U_SCALE; //u_mScale
+			const static std::string U_MULTIPLE; //u_is_multiple
 
 			const static Kint A_POSITION; // = 1; a_position
 			const static Kint A_NORMAL; // = 2; a_normal
@@ -51,8 +53,8 @@ namespace KEngine {
 			const static Kint A_MATRIX; // = 4; a_matrix
 
 		protected:
-			Object3D(std::string type) : type(type), vao(nullptr), ibo(nullptr),
-				vbo(nullptr), tbo(nullptr), nbo(nullptr),
+			Object3D(std::string type, Kboolean multiple = false): type(type), is_multiple(multiple),
+				vao(nullptr), ibo(nullptr), vbo(nullptr), tbo(nullptr), nbo(nullptr),
 				position(KVector::Vec3(0)), rotation(KMatrix::Quaternion()),
 				m_scale(KVector::Vec3(1.0f)){};
 
@@ -71,11 +73,13 @@ namespace KEngine {
 			}
 
 			static void bindUniform(const KRenderer::Shader* shader) {
-				if(block == nullptr) block = std::make_shared<KBuffer::UnifromBlock>(shader, MODEL.c_str());
+				if (block == nullptr) {
+					block = std::make_shared<KBuffer::UnifromBlock>(shader, MODEL.c_str());
+					block->prepare(std::vector<const char*>{
+						U_POSITION.c_str(), U_ROTATION.c_str(), U_SCALE.c_str(), U_MULTIPLE.c_str()
+					});
+				}
 				else block->bindShader(shader);
-				block->prepare(std::vector<const char*>{
-					U_POSITION.c_str(), U_ROTATION.c_str(), U_SCALE.c_str()
-				});
 			}
 
 			virtual void bind()const {
@@ -88,12 +92,13 @@ namespace KEngine {
 					block->allocate(std::vector<KBuffer::BlockData>{
 						{ U_POSITION.c_str(), position.data() },
 						{ U_ROTATION.c_str(), rotation.toMat4().data() },
-						{ U_SCALE.c_str(), m_scale.data() }
+						{ U_SCALE.c_str(), m_scale.data() },
+						{ U_MULTIPLE.c_str(), &is_multiple }
 					});
 				}
 			}
 
-			void unBind()const {
+			virtual void unBind()const {
 				if (vao != nullptr) {
 					vao->unBind();
 					vao->disableVertexArray();
@@ -113,8 +118,14 @@ namespace KEngine {
 				m_scale = v;
 			}
 
-			void translate(const KVector::Vec3& v) {
+			void translate(const KVector::Vec3& v, Kboolean correct = false) {
 				position += v;
+				if (correct) {
+					const static KVector::Vec3 dir(0, 0, 1);
+					const static KVector::Vec3 axis(0, 1, 0);
+					//our initial direction is (0, 0, 1);
+					rotation = KMatrix::Quaternion(dir.getAngle(v), axis);
+				}
 			}
 
 			void rotate(Kfloat angle, const KVector::Vec3& v) {
@@ -135,13 +146,15 @@ namespace KEngine {
 			}
 
 			virtual Ksize getCount()const = 0;
-			virtual void render(const KRenderer::Shader* shader = nullptr)const = 0;
+			virtual void render(const KRenderer::Shader* shader = nullptr,
+				const KRenderer::Shader* contourShader = nullptr)const = 0;
 		};
 
 		const std::string Object3D::MODEL("model");
 		const std::string Object3D::U_POSITION("u_mPos");
 		const std::string Object3D::U_ROTATION("u_mRotate");
 		const std::string Object3D::U_SCALE("u_mScale");
+		const std::string Object3D::U_MULTIPLE("u_is_multiple");
 
 		const Kint Object3D::A_POSITION = 1;
 		const Kint Object3D::A_NORMAL = 2;

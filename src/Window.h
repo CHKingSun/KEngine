@@ -19,10 +19,13 @@ namespace KEngine{
 			friend class KRenderer::Renderer;
 
 		private:
-			Kdouble run_time, pause_time;
 			Ksize width, height;
 			std::string title;
             GLFWwindow *window;
+
+			Kboolean is_active;
+			Kboolean is_focus;
+			Kdouble run_time, pause_time;
 
             Kboolean initGL() {
                 if(!glfwInit()){
@@ -46,6 +49,7 @@ namespace KEngine{
 				}
 
 				glClearColor(0.17f, 0.17f, 0.17f, 1.0f);
+				glfwSwapInterval(1);
 
 #if IMGUI_ENABLE
 				// Setup ImGui binding
@@ -61,6 +65,7 @@ namespace KEngine{
 #endif
 
 				std::cout << "Version: " << glGetString(GL_VERSION) << std::endl;
+				is_active = true;
 				run_time = 0;
 				pause_time = 0;
 
@@ -95,8 +100,8 @@ namespace KEngine{
 				return glfwWindowShouldClose(window) == GLFW_TRUE;
 			}
 
-			bool isUseful()const {
-				return window != nullptr;
+			bool actived()const {
+				return is_active;
 			}
 
 			void closeWindow()const {
@@ -112,6 +117,12 @@ namespace KEngine{
 			}
 
 			void update() {
+				if (is_active) {
+					run_time = glfwGetTime() - pause_time;
+				}
+				else {
+					pause_time = glfwGetTime() - run_time;
+				}
 				glfwSwapBuffers(window);
 				glfwPollEvents();
 			}
@@ -119,6 +130,11 @@ namespace KEngine{
 			void setTitle(const std::string& title) {
 				this->title = title;
 				glfwSetWindowTitle(window, this->title.c_str());
+			}
+
+			void resetTime() {
+				run_time = 0;
+				pause_time = 0;
 			}
 
 			inline const Kdouble getRunTime()const {

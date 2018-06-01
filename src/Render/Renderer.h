@@ -12,10 +12,10 @@
 
 namespace KEngine {
 	namespace KRenderer {
-		class Renderer {
-			using tvec2 = KVector::Vec2;
-			using tvec3 = KVector::Vec3;
+		using tvec2 = KVector::Vec2;
+		using tvec3 = KVector::Vec3;
 
+		class Renderer {
 			friend void window_size_callback(GLFWwindow* window, int width, int height);
 			friend void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 			friend void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
@@ -27,9 +27,6 @@ namespace KEngine {
 		protected:
 			KWindow::Window* window;
 			KRenderer::Shader* shader;
-
-			Kboolean is_active;
-			Kboolean is_focus;
 			Kboolean keys[512]; //-1, 32-162, 256-248
 			Kboolean mouse[3]; //left, right, wheel
 
@@ -46,17 +43,15 @@ namespace KEngine {
 				Kdouble mx, my;
 				glfwGetCursorPos(window->window, &mx, &my);
 				mouse_pos.x = mx, mouse_pos.y = my;
-				glfwSwapInterval(1);
-				is_active = true;
 			}
 
 		protected:
 			Renderer(const std::string& v_shader, const std::string& f_shader,
-				const std::string& title, Ksize swidth = 1000, Ksize sheight = 100):
+				const std::string& title, Ksize swidth = 1000, Ksize sheight = 700):
 				window(nullptr), shader(nullptr) {
 				window = new KWindow::Window(title, swidth, sheight);
 				shader = new KRenderer::Shader(v_shader, f_shader);
-				if (window->isUseful()) {
+				if (window->actived()) {
 					glfwSetWindowUserPointer(window->window, this);
 					initAction();
 				}
@@ -65,8 +60,8 @@ namespace KEngine {
 			virtual void keyEvent(Kint key, Kint action) {
 				keys[key] = action != GLFW_RELEASE;
 				if (keys[GLFW_KEY_ESCAPE]) {
-					is_active = !is_active;
-					if (is_active) {
+					window->is_active = !(window->is_active);
+					if (window->is_active) {
 						glfwSetInputMode(window->window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 					}
 					else {
@@ -95,11 +90,11 @@ namespace KEngine {
 			}
 
 			virtual void focusEvent(bool focused) {
-				is_focus = focused;
+				window->is_focus = focused;
 			}
 
 			virtual void iconifiedEvent(bool iconified) {
-				is_active = is_active && !iconified;
+				window->is_active = window->is_active && !iconified;
 			}
 
 		public:

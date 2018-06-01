@@ -193,6 +193,7 @@
     <ClInclude Include="src\Render\MazeRenderer.h" />
     <ClInclude Include="src\Render\Renderer.h" />
     <ClInclude Include="src\Render\Shader.h" />
+    <ClInclude Include="src\Render\TestRenderer.h" />
     <ClInclude Include="src\Window.h" />
   </ItemGroup>
   <ItemGroup>

@@ -51,7 +51,7 @@ namespace KEngine {
 					Kfloat tx = 0;
 					for (int j = 0; j <= aslices; ++j, xangle += per_xangle, tx += pertx) {
 						vertices->emplace_back(cos(xangle) * r, y, sin(xangle) * r);
-						texcoords->emplace_back(tx, ty);
+						texcoords->emplace_back(1.0 - tx, ty);
 					}
 				}
 				vertices->emplace_back(0, -radius, 0); //bottom pole [v_count - 2]
@@ -114,30 +114,33 @@ namespace KEngine {
 				if(material != nullptr) material->bind();
 			}
 
-			void bindTextures(const KRenderer::Shader* shader)const {
-				if (shader == nullptr || material == nullptr) return;
-				material->bindTextures(shader);
+			void unBind()const override {
+				Object3D::unBind();
+				if (material != nullptr) material->activeTextures(false);
 			}
 
-			void unBindTextures(const KRenderer::Shader* shader)const {
-				if (shader == nullptr || material == nullptr) return;
-				material->unactiveTextures(shader);
-			}
-
-			void render(const KRenderer::Shader* shader)const override {
+			void render(const KRenderer::Shader* shader = nullptr,
+				const KRenderer::Shader* contourShader = nullptr)const override {
 				bind(); 
-				bindTextures(shader);
 
+				if (contourShader != nullptr) {
+					glStencilFunc(GL_ALWAYS, 1, 0xFF);
+					glStencilMask(0xFF);
+				}
 				glDrawElements(GL_TRIANGLE_STRIP, count, GL_UNSIGNED_SHORT, nullptr);
 
-				//shader->bindUniform1i("u_draw_contour", true);
-				//glLineWidth(3.0);
-				//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-				//glDrawElements(GL_TRIANGLE_STRIP, count, GL_UNSIGNED_SHORT, nullptr);
-				//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-				//shader->bindUniform1i("u_draw_contour", false);
+				if (contourShader != nullptr) {
+					contourShader->bind();
+					glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+					glStencilMask(0x00);
+					glLineWidth(3.0);
+					glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+					glDrawElements(GL_TRIANGLE_STRIP, count, GL_UNSIGNED_SHORT, nullptr);
+					glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+					glStencilMask(0xFF);
+					shader->bind();
+				}
 
-				unBindTextures(shader);
 				unBind();
 			}
 

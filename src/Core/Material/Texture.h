@@ -7,9 +7,12 @@
 
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
+#include <memory>
 #include <GL/glew.h>
 #include <stb_image.h>
 #include <iostream>
+#include "../../Render/Buffer/UniformBlock.h"
 #include "../../KHeader.h"
 #include "../../Render/Shader.h"
 
@@ -38,6 +41,9 @@ namespace KEngine {
 
 			static Kint max_num; // = 0;
 			static std::unordered_map<std::string, TextureCount> texPaths;
+			const static KRenderer::Shader* shader;
+
+			const static std::string TEXTURES; // = "textures";
 			const static std::string TEX_HEAD; // = "u_textures[";
 			const static std::string TEX_TEXTURE; // = "].tex";
 			const static std::string TEX_TYPE; // = "].type";
@@ -73,7 +79,6 @@ namespace KEngine {
 					return;
 				}
 				if (glIsTexture(id)) glDeleteTextures(1, &id);
-				return;
 			}
 
 			Kuint getTextureId(const std::string &path)const {
@@ -155,28 +160,32 @@ namespace KEngine {
 				return tex_id;
 			}
 
-			void bind(const KRenderer::Shader *shader, Kuint activeId = 0XFFFFFFFF)const {
+			static void bindUniform(const KRenderer::Shader* shader) {
+				Texture::shader = shader;
+			}
+
+			void bind(Kuint activeId = 0XFFFFFFFF)const {
 				if (activeId < max_num) this->activeId = activeId;
 
-				glActiveTexture(GL_TEXTURE0 + activeId);
+				if (shader == nullptr) return;
+				glActiveTexture(GL_TEXTURE0 + this->activeId);
 				glBindTexture(GL_TEXTURE_2D, id);
-				const std::string index = std::to_string(activeId);
-				shader->bindUniform1i(TEX_HEAD + index + TEX_TEXTURE, GL_TEXTURE0 + activeId);
+				const std::string index = std::to_string(this->activeId);
+				shader->bindUniform1i(TEX_HEAD + index + TEX_TEXTURE, GL_TEXTURE0 + this->activeId);
 				shader->bindUniform1i(TEX_HEAD + index + TEX_TYPE, type);
 				shader->bindUniform1i(TEX_HEAD + index + TEX_ENABLE, 1);
 			}
 
-			void active(const KRenderer::Shader *shader) {
-				shader->bindUniform1i(std::string(TEX_HEAD + std::to_string(activeId) + TEX_ENABLE), 1);
-			}
-
-			void unActive(const KRenderer::Shader *shader)const {
-				shader->bindUniform1i(std::string(TEX_HEAD + std::to_string(activeId) + TEX_ENABLE), 0);
+			void active(Kboolean enable = true) {
+				shader->bindUniform1i(TEX_HEAD + std::to_string(activeId) + TEX_ENABLE, enable);
 			}
 		};
 
 		Kint Texture::max_num = 0;
 		std::unordered_map<std::string, TextureCount> Texture::texPaths = std::unordered_map<std::string, TextureCount>();
+		const KRenderer::Shader* Texture::shader(nullptr);
+
+		const std::string Texture::TEXTURES("textures");
 		const std::string Texture::TEX_HEAD("u_textures[");
 		const std::string Texture::TEX_TEXTURE("].tex");
 		const std::string Texture::TEX_TYPE("].type");

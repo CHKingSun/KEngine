@@ -39,6 +39,8 @@ namespace KEngine {
 
 			KMaterial::Material* material;
 
+			Kboolean test;
+
 			Ksize entry, exit;
 			Kboolean* maze;
 			//We can use a stack to save the track later.
@@ -132,7 +134,7 @@ namespace KEngine {
 							maze[now_mouse + width + 1] == false && //next right's up
 							maze[now_mouse - width + 1] == false) //next right's down
 							count += mazeGenerator(now_mouse + 1); //right can be the next step.
-						else if (now_mouse % width == width - 2 && exit == 0) { //generete an exit if not exists.
+						else if (now_mouse % width == width - 2 && exit == 0) { //generate an exit if not exists.
 							exit = now_mouse + 1;
 							maze[exit] = true;
 							++count;
@@ -210,7 +212,7 @@ namespace KEngine {
 
 		public:
 			Maze(Ksize w = 20, Ksize h = 20):
-				Object3D("Maze"), vertices(nullptr), tex_coords(nullptr),
+				Object3D("Maze", true), vertices(nullptr), tex_coords(nullptr),
 				normals(nullptr), indices(nullptr), matrices(nullptr), material(nullptr),
 				mbo(nullptr), maze(nullptr) {
 				generateBox(1.0, 1.0, 1.0);
@@ -262,45 +264,45 @@ namespace KEngine {
 				if(material != nullptr) material->bind();
 			}
 
-			void bindTextures(const KRenderer::Shader* shader)const {
-				if (shader == nullptr || material == nullptr) return;
-				material->bindTextures(shader);
+			void unBind()const override {
+				Object3D::unBind();
+				if (material != nullptr) material->activeTextures(false);
 			}
 
-			void unBindTextures(const KRenderer::Shader* shader)const {
-				if (shader == nullptr || material == nullptr) return;
-				material->unactiveTextures(shader);
-			}
-
-			void render(const KRenderer::Shader* shader= nullptr)const override {
+			void render(const KRenderer::Shader* shader= nullptr,
+				const KRenderer::Shader* contourShader = nullptr)const override {
 				bind();
-				bindTextures(shader);
-				shader->bindUniform1i("u_is_multiple", true);
 
-				glStencilFunc(GL_ALWAYS, 1, 0xFF);
-				glStencilMask(0xFF);
+				if (contourShader != nullptr) {
+					glStencilFunc(GL_ALWAYS, 1, 0xFF);
+					glStencilMask(0xFF);
+				}
 				glDrawElementsInstanced(GL_TRIANGLES, 36, GL_UNSIGNED_BYTE, nullptr, count);
 
-				shader->bindUniform1i("u_draw_contour", true);
-				glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
-				glStencilMask(0x00);
-				//glDisable(GL_DEPTH_TEST);
-				glLineWidth(3.0);
-				glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-				glDrawElementsInstanced(GL_TRIANGLES, 36, GL_UNSIGNED_BYTE, nullptr, count);
-				glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-				glStencilMask(0xFF);
-				//glEnable(GL_DEPTH_TEST);
-				shader->bindUniform1i("u_draw_contour", false);
+				if (contourShader != nullptr) {
+					contourShader->bind();
+					glStencilFunc(GL_NOTEQUAL, 1, 0xFF);
+					glStencilMask(0x00);
+					glLineWidth(3.0);
+					glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+					glDrawElementsInstanced(GL_TRIANGLES, 36, GL_UNSIGNED_BYTE, nullptr, count);
+					glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+					glStencilMask(0xFF);
+					shader->bind();
+				}
 
-				shader->bindUniform1i("u_is_multiple", false);
-				unBindTextures(shader);
 				unBind();
 			}
 
 			Ksize getCount()const override {
 				return count;
 			}
+
+#ifdef IMGUI_ENABLE
+			void drawGui() {
+				ImGui::Checkbox("change", &test);
+			}
+#endif // IMGUI_ENABLE
 		};
 	}
 }

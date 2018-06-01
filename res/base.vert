@@ -1,6 +1,6 @@
 #version 330 core
 
-struct ALight{ //Ambient light
+struct ALight { //Ambient light
     bool enable;
 
     float factor;
@@ -8,7 +8,7 @@ struct ALight{ //Ambient light
     vec4 ambient;
 };
 
-struct DLight{ //Direction light
+struct DLight { //Direction light
     bool enable;
 
     float factor;
@@ -21,7 +21,7 @@ struct DLight{ //Direction light
     vec4 specular;
 };
 
-struct PLight{ //Point Light
+struct PLight { //Point Light
     bool enable;
 
     float factor;
@@ -36,7 +36,7 @@ struct PLight{ //Point Light
     float kc, kl, kq;
 };
 
-struct SLight{ //Spot Light
+struct SLight { //Spot Light
     bool enable;
 
     float factor;
@@ -61,35 +61,36 @@ layout(location = 2) in vec3 a_normal;
 layout(location = 3) in vec2 a_texcoord;
 layout(location = 4) in mat4 a_matrix; //multiple render, it will use 4 locations to save, must be column major.
 
-uniform bool u_is_multiple;
-
 //uniform blocks has no location but has binding
 //but binding requires #version 420
-layout(std140, row_major) uniform model{
+layout(std140, row_major) uniform model {
     vec3 u_mPos;
     vec3 u_mScale;
     mat3 u_mRotate;
+    bool u_is_multiple;
     //model_view * vec4(position, 1.0) = u_mPos + (u_mRotate * (u_mScale * position));
     //u_NMatrix * normal = u_mRotate * (u_mScale * normal);
 };
 
-layout(std140) uniform material{
+layout(std140) uniform material {
     float u_shininess;
     vec4 u_ambient;
     vec4 u_diffuse;
     vec4 u_specular;
 };
 
-layout(std140, row_major) uniform projection{
+layout(std140, row_major) uniform projection {
     vec3 p_eye;
     mat4 u_view;
     mat4 u_proj;
 };
 
-uniform ALight u_aLights[MAX_LIGHTS_NUM];
-uniform PLight u_pLights[MAX_LIGHTS_NUM];
-uniform DLight u_dLights[MAX_LIGHTS_NUM];
-uniform SLight u_sLights[MAX_LIGHTS_NUM];
+layout(std140) uniform lights {
+    ALight u_aLights[MAX_LIGHTS_NUM];
+    PLight u_pLights[MAX_LIGHTS_NUM];
+    DLight u_dLights[MAX_LIGHTS_NUM];
+    SLight u_sLights[MAX_LIGHTS_NUM];
+}
 
 out feedback{
     mat4 b_out;

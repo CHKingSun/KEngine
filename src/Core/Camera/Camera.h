@@ -68,11 +68,13 @@ namespace KEngine{
 			virtual ~Camera() = default;
 
 			static void bindUniform(const KRenderer::Shader *shader) {
-				if (block == nullptr) block = std::make_shared<KBuffer::UnifromBlock>(shader, PROJECTION.c_str());
+				if (block == nullptr) {
+					block = std::make_shared<KBuffer::UnifromBlock>(shader, PROJECTION.c_str());
+					block->prepare(std::vector<const char*>{
+						EYE.c_str(), VIEW.c_str(), PROJ.c_str()
+					});
+				}
 				else block->bindShader(shader);
-				block->prepare(std::vector<const char*>{
-					EYE.c_str(), VIEW.c_str(), PROJ.c_str()
-				});
 			}
 
 			void bind()const {

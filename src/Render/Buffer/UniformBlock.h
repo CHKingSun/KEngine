@@ -27,7 +27,7 @@ namespace KEngine {
 		struct BlockMsg {
 			BlockMsg(const char* name, Kint offset, Kint size):
 				name(name), offset(offset), size(size){}
-			const char* name;
+			const std::string name;
 			Kint offset;
 			Kint size;
 		};
@@ -49,7 +49,7 @@ namespace KEngine {
 				shaders->emplace(program);
 				Kuint index = glGetUniformBlockIndex(program, name);
 				if (index == GL_INVALID_INDEX) {
-					std::cerr << "Wrong uniform block name!" << std::endl;
+					std::cerr << "Wrong uniform block name: " << blockName << "!" << std::endl;
 					program = 0;
 					return;
 				}
@@ -69,21 +69,22 @@ namespace KEngine {
 
 			void bindShader(const KRenderer::Shader* shader) {
 				//remember to relink program.
+				//remember to rebind shader when you want to prepare something in one shader.
 				if (shaders->find(shader->program) != shaders->end()) {
 					program = shader->program;
 					return;
 				}
 				Kuint index = glGetUniformBlockIndex(shader->program, blockName);
 				if (index == GL_INVALID_INDEX) {
-					std::cerr << "Wrong uniform block name!" << std::endl;
+					std::cerr << "Wrong uniform block name: " << blockName << "!" << std::endl;
 					return;
 				}
 				program = shader->program;
 				glUniformBlockBinding(program, index, binding);
 			}
 
-			void prepare(const std::vector<const char*>& names) {
-				if (blockMsgs != nullptr) return;
+			void prepare(const std::vector<const char*>& names, Kboolean force = false) {
+				if (!force && blockMsgs != nullptr) return;
 				if (binding == GL_INVALID_INDEX) {
 					std::cerr << "Wrong uniform blocks binding!" << std::endl;
 					return;
@@ -101,20 +102,27 @@ namespace KEngine {
 				glGetActiveUniformsiv(program, count, indices, GL_UNIFORM_TYPE, types);
 				glGetActiveUniformsiv(program, count, indices, GL_UNIFORM_SIZE, sizes);
 
-				blockMsgs = new std::vector<BlockMsg*>();
-				blockMsgs->reserve(count);
+				if (blockMsgs == nullptr) {
+					blockMsgs = new std::vector<BlockMsg*>();
+					blockMsgs->reserve(count);
 
-				glGenBuffers(1, &ubo);
-				glBindBuffer(GL_UNIFORM_BUFFER, ubo);
-				glBufferData(GL_UNIFORM_BUFFER, uboSize, nullptr, GL_DYNAMIC_DRAW);
+					glGenBuffers(1, &ubo);
+					glBindBuffer(GL_UNIFORM_BUFFER, ubo);
+					glBufferData(GL_UNIFORM_BUFFER, uboSize, nullptr, GL_DYNAMIC_DRAW);
+					glBindBufferBase(GL_UNIFORM_BUFFER, binding, ubo);
+				}
+				else {
+					glBindBuffer(GL_UNIFORM_BUFFER, ubo);
+					//blockMsgs->reserve(blockMsgs->capacity() + count);
+				}
+
 				for (int i = 0; i < count; ++i) {
 					blockMsgs->emplace_back(new BlockMsg(names[i], offsets[i],
 						sizes[i] * getSize(types[i])));
 					//std::cout << names[i] << ": " << offsets[i] << ", "
 					//	<< sizes[i] << ", " << getSize(types[i]) << std::endl;
 				}
-				glBindBufferBase(GL_UNIFORM_BUFFER, binding, ubo);
-				glBindBuffer(GL_UNIFORM_BUFFER, 0);
+				//glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
 				delete[] indices;
 				delete[] offsets;
@@ -122,8 +130,8 @@ namespace KEngine {
 				delete[] sizes;
 			}
 
-			void prepare(const std::vector<BlockData>& blocks) {
-				if (blockMsgs != nullptr) return;
+			void prepare(const std::vector<BlockData>& blocks, Kboolean force = false) {
+				if (!force && blockMsgs != nullptr) return;
 				if (binding == GL_INVALID_INDEX) {
 					std::cerr << "Wrong uniform blocks binding!" << std::endl;
 					return;
@@ -146,23 +154,30 @@ namespace KEngine {
 				glGetActiveUniformsiv(program, count, indices, GL_UNIFORM_TYPE, types);
 				glGetActiveUniformsiv(program, count, indices, GL_UNIFORM_SIZE, sizes);
 
-				blockMsgs = new std::vector<BlockMsg*>();
-				blockMsgs->reserve(count);
+				if (blockMsgs == nullptr) {
+					blockMsgs = new std::vector<BlockMsg*>();
+					blockMsgs->reserve(count);
 
-				glGenBuffers(1, &ubo);
-				glBindBuffer(GL_UNIFORM_BUFFER, ubo);
-				glBufferData(GL_UNIFORM_BUFFER, uboSize, nullptr, GL_DYNAMIC_DRAW);
+					glGenBuffers(1, &ubo);
+					glBindBuffer(GL_UNIFORM_BUFFER, ubo);
+					glBufferData(GL_UNIFORM_BUFFER, uboSize, nullptr, GL_DYNAMIC_DRAW);
+					glBindBufferBase(GL_UNIFORM_BUFFER, binding, ubo);
+				}
+				else {
+					glBindBuffer(GL_UNIFORM_BUFFER, ubo);
+					//blockMsgs->reserve(blockMsgs->capacity() + count);
+					//note: when you use reserve, what it saved before will be undefined.
+				}
 
 				for (int i = 0; i < count; ++i) {
-					blockMsgs->emplace_back(new BlockMsg(names[i], offsets[i],
+					blockMsgs->emplace_back(new BlockMsg(blocks[i].name, offsets[i],
 						sizes[i] * getSize(types[i])));
 					glBufferSubData(GL_UNIFORM_BUFFER, offsets[i],
 						sizes[i] * getSize(types[i]), blocks[i].data);
 					//std::cout << names[i] << ": " << offsets[i] << ", "
 					//	<< sizes[i] << ", " << getSize(types[i]) << std::endl;
 				}
-				glBindBufferBase(GL_UNIFORM_BUFFER, binding, ubo);
-				glBindBuffer(GL_UNIFORM_BUFFER, 0);
+				//glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
 				delete[] indices;
 				delete[] offsets;
@@ -184,7 +199,7 @@ namespace KEngine {
 					if (it->name == data.name) {
 						glBindBuffer(GL_UNIFORM_BUFFER, ubo);
 						glBufferSubData(GL_UNIFORM_BUFFER, it->offset, it->size, data.data);
-						glBindBufferBase(GL_UNIFORM_BUFFER, binding, ubo);
+						//glBindBufferBase(GL_UNIFORM_BUFFER, binding, ubo);
 						glBindBuffer(GL_UNIFORM_BUFFER, 0);
 						return;
 					}
@@ -196,7 +211,7 @@ namespace KEngine {
 				// glUnmapBuffer(GL_UNIFORM_BUFFER);
 			}
 
-			void allocate(const std::vector<BlockData>& blocks) {
+			void allocate(const std::vector<BlockData>& blocks)const {
 				if (binding == GL_INVALID_INDEX) {
 					std::cerr << "Wrong uniform blocks binding!" << std::endl;
 					return;
@@ -216,7 +231,7 @@ namespace KEngine {
 					}
 				}
 
-				glBindBufferBase(GL_UNIFORM_BUFFER, binding, ubo);
+				//glBindBufferBase(GL_UNIFORM_BUFFER, binding, ubo);
 				glBindBuffer(GL_UNIFORM_BUFFER, 0);
 			}
 		};

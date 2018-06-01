@@ -20,9 +20,9 @@
 
 namespace KEngine {
 	namespace KRenderer {
+		using tvec2 = KVector::Vec2;
+		using tvec3 = KVector::Vec3;
 		class MazeRenderer : public Renderer {
-			using tvec2 = KVector::Vec2;
-			using tvec3 = KVector::Vec3;
 
 		private:
 			KCamera::Camera* viewCamera;
@@ -66,6 +66,7 @@ namespace KEngine {
 				KObject::Object3D::bindUniform(shader);
 				KMaterial::Material::bindUniform(shader);
 				KCamera::Camera::bindUniform(shader);
+				KLight::Light::bindUniform(shader);
 				shader->bind();
 
 				viewLight = new KLight::PointLight(tvec3(0, 6, 0));
@@ -106,12 +107,16 @@ namespace KEngine {
 				glEnable(GL_CULL_FACE);
 				glCullFace(GL_BACK);
 
-				viewLight->bind(shader, 0);
-				assistLight->bind(shader, 0);
-				followLight->bind(shader, 1);
+				auto testShader = new Shader(RES_PATH + "test.vert", RES_PATH + "test.frag");
+
+				KObject::Object3D::bindUniform(testShader);
+				KCamera::Camera::bindUniform(testShader);
+
+				viewLight->bind(0);
+				assistLight->bind(0);
+				followLight->bind(1);
 
 				last_mouse = mouse_pos;
-				tvec2 wSize(window->getWindowSize());
 				tvec3 speed(0.03, 0, 0.03);
 #if IMGUI_ENABLE
 				Kboolean movable = false;
@@ -123,6 +128,7 @@ namespace KEngine {
 					window->clear();
 
 					tvec2 now_mouse(mouse_pos);
+					tvec2 wSize(window->getWindowSize());
 					//if (!window->actived()) {
 #if IMGUI_ENABLE
 						glStencilMask(0x00);
@@ -160,7 +166,7 @@ namespace KEngine {
 								firstCamera->setPosition(maze->getStartPosition());
 								sphere->setPosition(maze->getStartPosition() + tvec3(0, -0.3f, 0));
 								followLight->setPosition(thirdCamera->getPosition() + tvec3(0, 2, 0));
-								followLight->bindPosition(shader);
+								followLight->bindPosition();
 							}
 						}
 						tvec3 dir = thirdCamera->getDirection(KEngine::KCamera::FORWARD);
@@ -169,6 +175,7 @@ namespace KEngine {
 						dir = thirdCamera->getDirection(KEngine::KCamera::RIGHT);
 						ImGui::Text("Your camera's right:\n%.2f, %.2f, %.2f.", dir.x, dir.y, dir.z);
 						sphere->drawGui();
+						maze->drawGui();
 						if (ImGui::Button("Exit")) window->closeWindow();
 
 						ImGui::End();
@@ -189,25 +196,25 @@ namespace KEngine {
 					//	glViewport(0, 0, wSize.x, wSize.y);
 					//}
 
-					if (is_active) {
+					if (window->actived()) {
 						if (keys['W'] || keys[GLFW_KEY_UP]) {
 							firstCamera->translate(firstCamera->getDirection(KCamera::DirectionType::FORWARD) *= speed);
-							sphere->translate(thirdCamera->getDirection(KCamera::DirectionType::FORWARD) *= speed);
+							sphere->translate(thirdCamera->getDirection(KCamera::DirectionType::FORWARD) *= speed, true);
 						}
 						else if (keys['S'] || keys[GLFW_KEY_DOWN]) {
 							firstCamera->translate(firstCamera->getDirection(KCamera::DirectionType::BACK) *= speed);
-							sphere->translate(thirdCamera->getDirection(KCamera::DirectionType::BACK) *= speed);
+							sphere->translate(thirdCamera->getDirection(KCamera::DirectionType::BACK) *= speed, true);
 						}
 						else if (keys['A'] || keys[GLFW_KEY_LEFT]) {
 							firstCamera->translate(firstCamera->getDirection(KCamera::DirectionType::LEFT) *= speed);
-							sphere->translate(thirdCamera->getDirection(KCamera::DirectionType::LEFT) *= speed);
+							sphere->translate(thirdCamera->getDirection(KCamera::DirectionType::LEFT) *= speed, true);
 						}
 						else if (keys['D'] || keys[GLFW_KEY_RIGHT]) {
 							firstCamera->translate(firstCamera->getDirection(KCamera::DirectionType::RIGHT) *= speed);
-							sphere->translate(thirdCamera->getDirection(KCamera::DirectionType::RIGHT) *= speed);
+							sphere->translate(thirdCamera->getDirection(KCamera::DirectionType::RIGHT) *= speed, true);
 						}
 						followLight->setPosition(tvec3(0, 2, 0) += thirdCamera->getPosition());
-						followLight->bindPosition(shader);
+						followLight->bindPosition();
 						if (last_mouse != now_mouse) {
 							now_mouse -= last_mouse;
 							Kfloat radius = wSize.length();
@@ -218,7 +225,7 @@ namespace KEngine {
 							if (!KFunction::isZero(now_mouse.x)) followLight->rotate(
 								KMatrix::Quaternion(tvec3(0, 0, 1).getAngle(tvec3(now_mouse.x, 0,
 									KFunction::distance(wSize, now_mouse))), tvec3(0, -now_mouse.x, 0)));
-							followLight->bindDirection(shader);
+							followLight->bindDirection();
 							last_mouse += now_mouse;
 						}
 					} else {
@@ -229,10 +236,10 @@ namespace KEngine {
 					else if (change_camera == 2) viewCamera->bind();
 
 					assistLight->rotate(1.5, tvec3(0, 1, 0));
-					assistLight->bindDirection(shader);
+					assistLight->bindDirection();
 
-					if (change_camera == 0) sphere->render(shader);
-					maze->render(shader);
+					if (change_camera == 0) sphere->render();
+					maze->render(shader, testShader);
 
 					window->update();
 				}
