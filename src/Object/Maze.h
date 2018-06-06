@@ -172,17 +172,17 @@ namespace KEngine {
 			void initArray() {
 				vao = new KBuffer::VertexArray();
 
-				vbo = new KBuffer::VertexBuffer(vertices, sizeof(tvec3) * 24);
+				vbo = new KBuffer::VertexBuffer(sizeof(tvec3) * 24, vertices);
 				vao->allocate(vbo, A_POSITION, 3, GL_FLOAT);
 
-				tbo = new KBuffer::VertexBuffer(tex_coords, sizeof(tvec2) * 24);
+				tbo = new KBuffer::VertexBuffer(sizeof(tvec2) * 24, tex_coords);
 				vao->allocate(tbo, A_TEXCOORD, 2, GL_FLOAT);
 
-				nbo = new KBuffer::VertexBuffer(normals, sizeof(tvec3) * 24);
+				nbo = new KBuffer::VertexBuffer(sizeof(tvec3) * 24, normals);
 				vao->allocate(nbo, A_NORMAL, 3, GL_FLOAT);
 
-				ibo = new KBuffer::VertexBuffer(indices->data(),
-					sizeof(Face<Kubyte>) * 12, KBuffer::BufferType::INDEX);
+				ibo = new KBuffer::VertexBuffer(sizeof(Face<Kubyte>) * 12,
+					indices->data(), KBuffer::BufferType::INDEX);
 
 				delete[] vertices; vertices = nullptr;
 				delete[] tex_coords; tex_coords = nullptr;
@@ -193,8 +193,8 @@ namespace KEngine {
 			void bindMatrices() {
 				if (matrices == nullptr) return;
 				delete mbo;
-				mbo = new KBuffer::VertexBuffer(matrices->data(),
-					matrices->size() * sizeof(tmat4));
+				mbo = new KBuffer::VertexBuffer(matrices->size() * sizeof(tmat4),
+					matrices->data());
 				vao->allocate(mbo, A_MATRIX, 4, GL_FLOAT, false, sizeof(tmat4), 0);
 				glVertexAttribDivisor(A_MATRIX, 1);
 				vao->allocate(mbo, A_MATRIX + 1, 4, GL_FLOAT, false,

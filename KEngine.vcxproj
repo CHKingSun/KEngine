@@ -188,6 +188,7 @@
     <ClInclude Include="src\Render\Buffer\BackBuffer.h" />
     <ClInclude Include="src\Render\Buffer\FrameBuffer.h" />
     <ClInclude Include="src\Render\Buffer\ShadowMap.h" />
+    <ClInclude Include="src\Render\Buffer\TextureBuffer.h" />
     <ClInclude Include="src\Render\Buffer\UniformBlock.h" />
     <ClInclude Include="src\Render\Buffer\VertexArray.h" />
     <ClInclude Include="src\Render\Buffer\VertexBuffer.h" />
