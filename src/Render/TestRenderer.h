@@ -8,9 +8,12 @@
 //just for test.
 
 #include "./Renderer.h"
+#include "./Buffer/ShadowMap.h"
+#include "../Core/Material/Texture.h"
 #include "../Core/Light/PointLight.h"
 #include "../Core/Camera/Camera.h"
 #include "../Object/Plane.h"
+#include "../Object/Sphere.h"
 
 namespace KEngine {
 	namespace KRenderer {
@@ -23,11 +26,12 @@ namespace KEngine {
 			KCamera::Camera* camera;
 			KObject::Plane* plane1;
 			KObject::Plane* plane2;
+			KObject::Sphere* sphere;
 
 		public:
 			TestRenderer() : Renderer(RES_PATH + "phong.vert", RES_PATH + "phong.frag", "test") {
 				testShader = new Shader(RES_PATH + "test.vert", RES_PATH + "test.frag");
-				light = new KLight::PointLight(tvec3(4, 0, 0));
+				light = new KLight::PointLight(tvec3(0, 3, 0));
 				camera = new KCamera::Camera(60, 1000.0f / 700.0f, 0.1, 1000);
 				camera->rotateView(45, tvec3(-1, 0, 0));
 				camera->setPosition(tvec3(0, 1, 1));
@@ -36,8 +40,10 @@ namespace KEngine {
 				plane1->addTexture(RES_PATH + "stone.png");
 				plane1->translate(tvec3(0, 0, -0.5));
 				plane2 = new KObject::Plane();
+				plane2->addTexture(RES_PATH + "stone.png", KMaterial::TextureType::DIFFUSE);
 				plane2->rotate(90, tvec3(-1, 0, 0));
 				plane2->translate(tvec3(0, -0.5, 0));
+				sphere = new KObject::Sphere(0.25, 30, 30);
 			}
 			~TestRenderer()override {
 				delete testShader;
@@ -45,6 +51,7 @@ namespace KEngine {
 				delete camera;
 				delete plane1;
 				delete plane2;
+				delete sphere;
 			}
 
 			void exec() override {
@@ -61,6 +68,8 @@ namespace KEngine {
 				KObject::Object3D::bindUniform(testShader);
 				KCamera::Camera::bindUniform(testShader);
 				//Remember to bind shader later.
+
+				auto shadowMap = new KBuffer::ShadowMap(700, 700);
 
 #if IMGUI_ENABLE
 				Kboolean movable = false;
@@ -113,17 +122,30 @@ namespace KEngine {
 						glViewport(0, 0, wSize.x, wSize.y);
 						camera->setPerspective(60, Kfloat(wSize.x) / Kfloat(wSize.y), 0.1f, 1000.0f);
 					}
-					camera->bind();
+					//camera->bind();
 					light->active(en_light);
 #endif
 					//} else {
 					//	glViewport(0, 0, wSize.x, wSize.y);
 					//}
 
-					shader->bind();
-					plane1->render(shader ,testShader);
-
+					camera->setPosition(tvec3(0, 3, 0));
+					camera->bind();
+					glClear(GL_DEPTH_BUFFER_BIT);
 					testShader->bind();
+					shadowMap->bind();
+					plane1->render();
+					sphere->render();
+					plane2->render();
+					shadowMap->unBind();
+					camera->setPosition(tvec3(0, 1, 1));
+					camera->bind();
+
+					glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+					shader->bind();
+					shadowMap->bindTexture(shader);
+					plane1->render(shader, testShader);
+					sphere->render(shader, testShader);
 					plane2->render();
 
 					window->update();

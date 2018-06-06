@@ -126,43 +126,43 @@ namespace KEngine {
 
 		void window_size_callback(GLFWwindow* window, int width, int height)
 		{
-			Renderer* win = static_cast<Renderer*>(glfwGetWindowUserPointer(window));
+			auto win = static_cast<Renderer*>(glfwGetWindowUserPointer(window));
 			if (win != nullptr) win->resize(width, height);
 			win = nullptr;
 		}
 
 		void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
-			Renderer* renderer = static_cast<Renderer*>(glfwGetWindowUserPointer(window));
+			auto renderer = static_cast<Renderer*>(glfwGetWindowUserPointer(window));
 			if (renderer != nullptr) renderer->keyEvent(key, action);
 			renderer = nullptr;
 		}
 
 		void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
-			Renderer* renderer = static_cast<Renderer*>(glfwGetWindowUserPointer(window));
+			auto renderer = static_cast<Renderer*>(glfwGetWindowUserPointer(window));
 			if (renderer != nullptr) renderer->mouseEvent(button, action);
 			renderer = nullptr;
 		}
 
 		void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
-			Renderer* renderer = static_cast<Renderer*>(glfwGetWindowUserPointer(window));
+			auto renderer = static_cast<Renderer*>(glfwGetWindowUserPointer(window));
 			if (renderer != nullptr) renderer->mouseWheelEvent(yoffset);
 			renderer = nullptr;
 		}
 
 		static void cursor_position_callback(GLFWwindow* window, double xpos, double ypos) {
-			Renderer* renderer = static_cast<Renderer*>(glfwGetWindowUserPointer(window));
+			auto renderer = static_cast<Renderer*>(glfwGetWindowUserPointer(window));
 			if (renderer != nullptr) renderer->cursorEvent(xpos, ypos);
 			renderer = nullptr;
 		}
 
 		void cursor_enter_callback(GLFWwindow* window, int entered) {
-			Renderer* renderer = static_cast<Renderer*>(glfwGetWindowUserPointer(window));
+			auto renderer = static_cast<Renderer*>(glfwGetWindowUserPointer(window));
 			if (renderer != nullptr) renderer->focusEvent(entered != GLFW_FALSE);
 			renderer = nullptr;
 		}
 
 		void window_iconify_callback(GLFWwindow* window, int iconified) {
-			Renderer* renderer = static_cast<Renderer*>(glfwGetWindowUserPointer(window));
+			auto renderer = static_cast<Renderer*>(glfwGetWindowUserPointer(window));
 			if (renderer != nullptr) renderer->iconifiedEvent(iconified != GLFW_FALSE);
 			renderer = nullptr;
 		}

@@ -57,10 +57,10 @@ namespace KEngine{
                 return this->values[n];
             }
 
-			inline bool operator==(const Vec3& v)const {
+			inline Kboolean operator==(const Vec3& v)const {
 				return x == v.x && y == v.y && z == v.z;
 			}
-			inline bool operator!=(const Vec3& v)const {
+			inline Kboolean operator!=(const Vec3& v)const {
 				//return x != v.x || y != v.y || z != v.z;
 				return !this->operator==(v);
 			}

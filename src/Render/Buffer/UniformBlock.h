@@ -223,7 +223,7 @@ namespace KEngine {
 
 				glBindBuffer(GL_UNIFORM_BUFFER, ubo);
 
-				for (auto data : blocks) {
+				for (auto &data : blocks) {
 					for (auto &it : *blockMsgs) {
 						if (it->name == data.name) {
 							glBufferSubData(GL_UNIFORM_BUFFER, it->offset, it->size, data.data);

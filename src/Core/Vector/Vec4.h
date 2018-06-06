@@ -60,10 +60,10 @@ namespace KEngine{
                 return this->values[n];
 			}
 
-			inline bool operator==(const Vec4& v)const {
+			inline Kboolean operator==(const Vec4& v)const {
 				return x == v.x && y == v.y && z == v.z && w == v.w;
 			}
-			inline bool operator!=(const Vec4& v)const {
+			inline Kboolean operator!=(const Vec4& v)const {
 				//return x != v.x || y != v.y || z != v.z || w != v.w;
 				return !this->operator==(v);
 			}

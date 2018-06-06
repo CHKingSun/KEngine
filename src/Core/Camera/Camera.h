@@ -104,6 +104,11 @@ namespace KEngine{
             }
             void setPerspective(const Kfloat &fovy, const Kfloat &aspect,
 				                const Kfloat &zNear, const Kfloat &zFar){
+				if (KFunction::isZero(fovy) || KFunction::isZero(aspect) ||
+					KFunction::isValid(fovy) || KFunction::isValid(aspect)) {
+					std::cerr << "fovy and aspect cannot be zero" << std::endl;
+					return;
+				}
                 projection = KFunction::perspective(fovy, aspect, zNear, zFar);
 
             }

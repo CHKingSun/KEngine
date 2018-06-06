@@ -17,7 +17,7 @@ namespace KEngine {
 			GLenum type;
 
 		public:
-			FrameBuffer(GLenum type = GL_FRAMEBUFFER):type(type) {
+			FrameBuffer(GLenum type = GL_FRAMEBUFFER): type(type) {
 				glGenFramebuffers(1, &id);
 				glBindFramebuffer(this->type, id);
 			}
@@ -37,10 +37,11 @@ namespace KEngine {
 				return glCheckFramebufferStatus(type) == GL_FRAMEBUFFER_COMPLETE;
 			}
 
-			void bindTexture(KMaterial::Texture *texture, GLenum attachment = GL_COLOR_ATTACHMENT0)const {
+			void bindTexture(KMaterial::TextureType tex_type, Kuint tex_id, GLenum attachment = GL_COLOR_ATTACHMENT0)const {
+				//attachment is just for color framebuffer.
 				bind();
 				using namespace KMaterial;
-				switch (texture->type)
+				switch (tex_type)
 				{
 				case TextureType::DEPTH:
 					attachment = GL_DEPTH_ATTACHMENT;
@@ -54,8 +55,8 @@ namespace KEngine {
 				default:
 					break;
 				}
-				glFramebufferTexture2D(type, attachment, GL_TEXTURE_2D, texture->id, 0);
-				if (texture->type == DEPTH || texture->type == STENCIL || texture->type == DEPTH_AND_STENCIL) {
+				glFramebufferTexture2D(type, attachment, GL_TEXTURE_2D, tex_id, 0);
+				if (tex_type == DEPTH || tex_type == STENCIL || tex_type == DEPTH_AND_STENCIL) {
 					glDrawBuffer(GL_NONE);
 				}
 				else {

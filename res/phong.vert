@@ -33,6 +33,7 @@ out feedback{
 out vec3 v_N;
 out vec3 v_E;
 out vec3 v_mPos;
+// out vec4 v_shadowcoord;
 out vec2 v_texcoord;
 
 void main() {
@@ -48,6 +49,7 @@ void main() {
     v_E = normalize(p_eye - m_pos);
     v_mPos = m_pos;
     v_texcoord = a_texcoord;
+    // v_shadowcoord = gl_Position;
 
     b_pos = a_normal;
     b_scale = u_mScale;

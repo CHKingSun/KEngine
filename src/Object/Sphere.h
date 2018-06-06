@@ -98,6 +98,7 @@ namespace KEngine {
 				indices(nullptr), material(nullptr) {
 				material = new KMaterial::Material();
 				material->addTexture(RES_PATH + "earth.jpg");
+				material->addTexture(RES_PATH + "earth.jpg", KMaterial::SPECULAR);
 				generate(aslices, rslices);
 				initArray();
 			}
@@ -124,6 +125,7 @@ namespace KEngine {
 				bind(); 
 
 				if (contourShader != nullptr) {
+					glClear(GL_STENCIL_BUFFER_BIT);
 					glStencilFunc(GL_ALWAYS, 1, 0xFF);
 					glStencilMask(0xFF);
 				}

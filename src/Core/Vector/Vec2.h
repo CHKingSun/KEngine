@@ -52,10 +52,10 @@ namespace KEngine{
                 return this->values[n]; //for const object, just get value.
 			}
 
-			inline bool operator==(const Vec2& v)const {
+			inline Kboolean operator==(const Vec2& v)const {
 				return x == v.x && y == v.y;
 			}
-			inline bool operator!=(const Vec2& v)const {
+			inline Kboolean operator!=(const Vec2& v)const {
 				//return x != v.x || y != v.y;
 				return !this->operator==(v);
 			}

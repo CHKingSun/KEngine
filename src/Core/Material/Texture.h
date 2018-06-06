@@ -81,7 +81,7 @@ namespace KEngine {
 				if (glIsTexture(id)) glDeleteTextures(1, &id);
 			}
 
-			Kuint getTextureId(const std::string &path)const {
+			static Kuint getTextureId(const std::string &path) {
 				auto fit = texPaths.find(path);
 				if (fit != texPaths.end()) {
 					fit->second.count += 1;
@@ -130,7 +130,7 @@ namespace KEngine {
 				return tex_id;
 			}
 
-			Kuint getTextureId(TextureType type = COLOR, Ksize width = 1024, Ksize height = 1024)const {
+			static Kuint getTextureId(TextureType type = COLOR, Ksize width = 1024, Ksize height = 1024) {
 				Kuint tex_id;
 				glGenTextures(1, &tex_id);
 				glBindTexture(GL_TEXTURE_2D, tex_id);
@@ -160,6 +160,39 @@ namespace KEngine {
 				return tex_id;
 			}
 
+			static Kuint getCubeTextureId(TextureType type = COLOR, Ksize width = 1024, Ksize height = 1024) {
+				Kuint tex_id;
+				glGenTextures(1, &tex_id);
+				glBindTexture(GL_TEXTURE_CUBE_MAP, tex_id);
+
+				GLenum format = GL_RGBA;
+				switch (type)
+				{
+				case KEngine::KMaterial::DEPTH:
+					format = GL_DEPTH_COMPONENT;
+					break;
+				case KEngine::KMaterial::STENCIL:
+					format = GL_STENCIL_INDEX;
+					break;
+				case KEngine::KMaterial::DEPTH_AND_STENCIL:
+					format = GL_DEPTH_STENCIL;
+					break;
+				default:
+					break;
+				}
+				for (Kuint i = 0; i < 6; ++i) {
+					//PX, NX, PY, NY, PZ, NZ
+					glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, format, width, height, 0, format, GL_FLOAT, nullptr);
+				}
+
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+				return tex_id;
+			}
+
 			static void bindUniform(const KRenderer::Shader* shader) {
 				Texture::shader = shader;
 			}
@@ -171,7 +204,7 @@ namespace KEngine {
 				glActiveTexture(GL_TEXTURE0 + this->activeId);
 				glBindTexture(GL_TEXTURE_2D, id);
 				const std::string index = std::to_string(this->activeId);
-				shader->bindUniform1i(TEX_HEAD + index + TEX_TEXTURE, GL_TEXTURE0 + this->activeId);
+				shader->bindUniform1i(TEX_HEAD + index + TEX_TEXTURE, this->activeId);
 				shader->bindUniform1i(TEX_HEAD + index + TEX_TYPE, type);
 				shader->bindUniform1i(TEX_HEAD + index + TEX_ENABLE, 1);
 			}

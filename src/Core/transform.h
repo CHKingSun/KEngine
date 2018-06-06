@@ -111,8 +111,7 @@ namespace KEngine{
 
         Mat4 perspective(const Kfloat &fovy, const Kfloat &aspect, const Kfloat &zNear, const Kfloat &zFar){
             assert((aspect > static_cast<Kfloat>(EPSILON_E6)) &&
-                   ((zFar - zNear) > static_cast<Kfloat>(EPSILON_E6)) &&
-					fovy > 0 && fovy < 180.0);
+                   zFar > zNear && fovy > 0 && fovy < 180.0);
 
             const auto cot = static_cast<Kfloat>(1.0 / tan(toRadian(fovy / 2.0)));
             Mat4 m(0);

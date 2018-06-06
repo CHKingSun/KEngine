@@ -46,6 +46,10 @@ namespace KEngine{
         Kboolean isZero(const T &c){
             return abs(c) <= static_cast<T>(EPSILON_E6);
         }
+		template <typename T>
+		Kboolean isValid(const T& c) {
+			return isnan(c) || isinf(c);
+		}
         template <typename T>
         const T& min(const T &a, const T &b){
             return a < b ? a : b;

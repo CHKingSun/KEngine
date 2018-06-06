@@ -115,6 +115,7 @@ void calSLight(SLight l, vec3 N, vec3 E, vec3 m_pos, float u_shininess,
 in vec3 v_N;
 in vec3 v_E;
 in vec3 v_mPos;
+// in vec4 v_shadowcoord;
 in vec2 v_texcoord;
 
 layout(std140) uniform material {
@@ -132,6 +133,8 @@ layout(std140) uniform lights {
 };
 
 uniform Texture u_textures[MAX_TEXTURE_NUM];
+
+// uniform samplerCubeShadow u_shadow_texture;
 
 out vec4 fragColor;
 
@@ -157,11 +160,11 @@ void main() {
     }
 
     if(flag[0]) ambient *= u_ambient;
-    else ambient = u_ambient * vec4(0.3, 0.3, 0.3, 1.0);
+    else ambient = u_ambient * vec4(0.3f, 0.3f, 0.3f, 1.0f);
     if(flag[1]) diffuse *= u_diffuse;
-    else diffuse = u_diffuse * vec4(0.3, 0.3, 0.3, 1.0);
+    else diffuse = u_diffuse * vec4(0.3f, 0.3f, 0.3f, 1.0f);
     if(flag[2]) specular *= u_specular;
-    else specular = u_specular * vec4(0.3, 0.3, 0.3, 1.0);
+    else specular = u_specular * vec4(0.3f, 0.3f, 0.3f, 1.0f);
 
     vec4 v_ambient = vec4(0.0f);
     vec4 v_diffuse = vec4(0.0f);
@@ -196,15 +199,17 @@ void main() {
         }
     }
 
-    vec4 minVal = vec4(0.0, 0.0, 0.0, 0.0);
-    vec4 maxVal = vec4(1.0, 1.0, 1.0, 1.0);
+    vec4 minVal = vec4(0.0f, 0.0f, 0.0f, 0.0f);
+    vec4 maxVal = vec4(1.0f, 1.0f, 1.0f, 1.0f);
     v_ambient = clamp(v_ambient, minVal, maxVal);
     v_diffuse = clamp(v_diffuse, minVal, maxVal);
     v_specular = clamp(v_specular, minVal, maxVal);
 
     if(flag[1]) {
+        // float shadow = texture(u_shadow_texture, v_shadowcoord);
         fragColor = v_ambient * ambient + v_diffuse * diffuse + v_specular * specular;
-        // fragColor = v_specular;
+        // fragColor = vec4(vec3(shadow), 1.0f);
+        // fragColor = texture(u_shadow_texture, v_mPos);
     } else if(flag[0]) {
         fragColor = v_ambient * ambient;
     } else {
