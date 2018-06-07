@@ -115,7 +115,6 @@ void calSLight(SLight l, vec3 N, vec3 E, vec3 m_pos, float u_shininess,
 in vec3 v_N;
 in vec3 v_E;
 in vec3 v_mPos;
-// in vec4 v_shadowcoord;
 in vec2 v_texcoord;
 
 layout(std140) uniform material {
@@ -133,8 +132,6 @@ layout(std140) uniform lights {
 };
 
 uniform Texture u_textures[MAX_TEXTURE_NUM];
-
-// uniform samplerCubeShadow u_shadow_texture;
 
 out vec4 fragColor;
 
@@ -199,8 +196,8 @@ void main() {
         }
     }
 
-    vec4 minVal = vec4(0.0f, 0.0f, 0.0f, 0.0f);
-    vec4 maxVal = vec4(1.0f, 1.0f, 1.0f, 1.0f);
+    vec4 minVal = vec4(0.0f, 0.0f, 0.0f, 1.0f);
+    vec4 maxVal = vec4(1.0f, 1.0f, 1.0f, 0.96f);
     v_ambient = clamp(v_ambient, minVal, maxVal);
     v_diffuse = clamp(v_diffuse, minVal, maxVal);
     v_specular = clamp(v_specular, minVal, maxVal);
@@ -215,4 +212,10 @@ void main() {
     } else {
         fragColor = ambient;
     }
+
+    // if(!gl_FrontFacing){
+    //     fragColor = vec4(fragColor.xyz, 0.0f);
+    // } else {
+    //     fragColor = vec4(fragColor.xyz, 0.96f);
+    // }
 }

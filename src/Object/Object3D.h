@@ -121,10 +121,11 @@ namespace KEngine {
 			void translate(const KVector::Vec3& v, Kboolean correct = false) {
 				position += v;
 				if (correct) {
-					const static KVector::Vec3 dir(0, 0, 1);
+					const static KVector::Vec3 dir(1, 0, 0);
 					const static KVector::Vec3 axis(0, 1, 0);
-					//our initial direction is (0, 0, 1);
-					rotation = KMatrix::Quaternion(dir.getAngle(v), axis);
+					//our initial direction is (1, 0, 0);
+					if(v.z >= 0) rotation = KMatrix::Quaternion(-dir.getAngle(v), axis);
+					else rotation = KMatrix::Quaternion(dir.getAngle(v), axis);
 				}
 			}
 

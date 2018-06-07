@@ -11,7 +11,7 @@
  int main() {
 
 #if 1
-	 auto mazeRenderer = new KEngine::KRenderer::MazeRenderer("maze");
+	 auto mazeRenderer = new KEngine::KRenderer::MazeRenderer("KMaze");
 
 	 mazeRenderer->exec();
 

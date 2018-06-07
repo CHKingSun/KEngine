@@ -136,6 +136,8 @@ namespace KEngine{
             }
             template <typename F = Kdouble>
             F getAngle(const Vec3 &v)const {
+				//note: you will just get the small angle(0, 180)
+				//the angle has no direction.
                 const F len1 = length<F>();
                 const F len2 = v.length<F>();
                 if(KFunction::isZero(len1) || KFunction::isZero(len2)) return static_cast<F>(KNAN);

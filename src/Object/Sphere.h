@@ -147,13 +147,18 @@ namespace KEngine {
 				unBind();
 			}
 
+			Kfloat getRadius()const {
+				return radius;
+			}
+
 			Ksize getCount()const override {
 				return count;
 			}
 
-#ifdef IMGUI_ENABLE
+#if IMGUI_ENABLE
 			void drawGui() {
-				ImGui::DragFloat("shininess", &material->shininess, 0.3, 0.1, 100);
+				tvec3 dir = rotation * tvec3(1, 0, 0);
+				ImGui::Text("Your sphere's direction:\n%.2f, %.2f, %.2f.", dir.x, dir.y, dir.z);
 			}
 #endif // IMGUI_ENABLE
 

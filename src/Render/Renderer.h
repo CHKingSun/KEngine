@@ -45,6 +45,16 @@ namespace KEngine {
 				mouse_pos.x = mx, mouse_pos.y = my;
 			}
 
+			void setActived(Kboolean actived)const {
+				window->is_active = actived;
+				if (window->is_active) {
+					glfwSetInputMode(window->window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+				}
+				else {
+					glfwSetInputMode(window->window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+				}
+			}
+
 		protected:
 			Renderer(const std::string& v_shader, const std::string& f_shader,
 				const std::string& title, Ksize swidth = 1000, Ksize sheight = 700):

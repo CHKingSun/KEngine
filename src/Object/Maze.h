@@ -39,8 +39,6 @@ namespace KEngine {
 
 			KMaterial::Material* material;
 
-			Kboolean test;
-
 			Ksize entry, exit;
 			Kboolean* maze;
 			//We can use a stack to save the track later.
@@ -243,8 +241,8 @@ namespace KEngine {
 				delete matrices;
 				matrices = new std::vector<tmat4>();
 				matrices->reserve(count);
-				Kfloat px = -Kfloat(width - 1) / 2.0;
-				Kfloat pz = Kfloat(height - 1) / 2.0;
+				Kfloat px = -Kfloat(width - 1) / 2.f; //It center is 0.5f away form border.
+				Kfloat pz = Kfloat(height - 1) / 2.f;
 				for (int i = 0; i < height; ++i) {
 					for (int j = 0; j < width; ++j) {
 						matrices->emplace_back(KFunction::translate(KVector::Vec3(px + j, 0, pz - i)).transpose());
@@ -257,6 +255,46 @@ namespace KEngine {
 
 			tvec3 getStartPosition()const {
 				return tvec3(-Kfloat(width - 1) / 2.0, 1, Kfloat(height - 1) / 2.0 - entry / width);
+			}
+
+			Kboolean isExit(const tvec3& center, Kfloat radius)const {
+				Kfloat x = floor(center.x) + 0.5f;
+				Kfloat z = floor(center.z) + 0.5f;
+
+				Ksize index = Ksize(x + Kfloat(width - 1) / 2.f) +
+					Ksize(Kfloat(height - 1) / 2.f - z) * width;
+
+				if (index == exit && center.x > x - 0.1f) return true;
+				return false;
+			}
+
+			tvec3 circleCollisionDetection(const tvec3& center, Kfloat radius)const {
+				//Maybe we need AABB box or sphere box to deal with intersection,
+				//but here we just use the simple and limited way.
+				tvec3 movement(0.f);
+				Kfloat x = floor(center.x) + 0.5f;
+				Kfloat z = floor(center.z) + 0.5f;
+
+				auto sx = Ksize(x + Kfloat(width - 1) / 2.f);
+				auto sz = Ksize(Kfloat(height - 1) / 2.f - z);
+				sx = sx < width ? sx : width - 1;
+				sz = sz < height ? sz : height - 1;
+				Ksize index = sx + sz * width;
+
+				if (center.x - radius < x - 0.5f &&
+					(sx == 0 || !maze[index - 1]))
+					movement.x = x - 0.5f + radius - center.x;
+				else if (center.x + radius > x + 0.5 &&
+					(sx == width - 1 || !maze[index + 1]))
+					movement.x = x + 0.5 - radius - center.x;
+				if (center.z - radius < z - 0.5f &&
+					(sz == 0 || !maze[index + width]))
+					movement.z = z - 0.5f + radius - center.z;
+				else if (center.z + radius > z + 0.5f &&
+					(sz == height - 1 || !maze[index - width]))
+					movement.z = z + 0.5 - radius - center.z;
+
+				return movement;
 			}
 
 			void bind()const override {
@@ -298,9 +336,9 @@ namespace KEngine {
 				return count;
 			}
 
-#ifdef IMGUI_ENABLE
+#if IMGUI_ENABLE
 			void drawGui() {
-				ImGui::Checkbox("change", &test);
+
 			}
 #endif // IMGUI_ENABLE
 		};

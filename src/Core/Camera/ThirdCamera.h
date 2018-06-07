@@ -88,6 +88,10 @@ namespace KEngine {
 				}
 			}
 
+			const tquaternion& getRotation()const {
+				return rotate;
+			}
+
 			tvec3 getPosition()const override {
 				if (target != nullptr) return target->getPosition() - (rotate * -position);
 				return rotate * position;
